@@ -10,9 +10,13 @@ import { Reveal } from "@/components/nav/reveal";
  * - KNX: trích xuất trực tiếp từ SVG trong HTML header của knx.org
  * - Casambi: casambi.com/wp-content/themes/casambi/images/casambi-logo-dark.svg
  * - DALI-2: dali-alliance.org (DiiA) — DALI/DALI-2 là trademark của DiiA, chỉ dùng vì đã
- *   xác nhận là đối tác/thành viên
- * - Matter: csa-iot.org/logo-and-brand-assets-library (variant "night" — dù tên vậy nhưng
- *   đây mới là bản màu tối đúng để hiển thị trên nền sáng, đã so 2 bản trước khi chọn)
+ *   xác nhận là đối tác/thành viên. ĐÃ KIỂM TRA trang Downloads chính thức: DiiA KHÔNG
+ *   công khai bản vector (SVG/EPS/AI) nào — chỉ có PNG. Giữ PNG, không tự vector hoá lại.
+ * - Matter: bản .svg (không phải .png) — file gốc trong brand-assets-library của csa-iot.org
+ *   chỉ là bitmap PNG nhúng trong khung SVG (không phải vector thật, đã kiểm tra: chỉ có
+ *   1 thẻ <image>, 0 <path>). Vector thật lấy qua Wikimedia Commons (tác giả gốc: CSA,
+ *   nguồn buildwithmatter.com, public domain hình dạng + có nhãn trademark) — đã verify
+ *   chỉ có <path>, không nhúng ảnh raster.
  *
  * "Đồng bộ size": height bằng nhau theo pixel KHÔNG có nghĩa là "nhìn nặng/nhẹ bằng
  * nhau" — Casambi chữ đặc kín khung nên cùng height sẽ nhìn to/đậm hơn hẳn; DALI-2 chữ
@@ -50,10 +54,12 @@ const protocolLogos = [
   {
     name: "Matter",
     href: "/danh-muc-san-pham/matter-smarthome",
-    src: "/protocols/matter.png",
-    width: 5038,
-    height: 1745,
-    heightClass: "h-12 sm:h-14", // nét mảnh, vẫn nhẹ hơn 3 logo kia — nâng thêm 1 bậc nữa
+    src: "/protocols/matter.svg",
+    width: 339,
+    height: 73,
+    // Bản SVG crop sát viền hơn bản PNG cũ nên ở baseline (h-9/h-11) đã nhìn TO hơn hẳn
+    // 3 logo kia — hạ thêm 1 bậc nữa.
+    heightClass: "h-7 sm:h-8",
   },
 ];
 
