@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   KNXStore Design Tokens
+   Nguồn chân lý: design-system/knxstore/MASTER.md
+   Sửa giá trị Ở ĐÓ trước, rồi đồng bộ lại đây. Không hardcode hex ngoài file này —
+   component chỉ được reference token (bg-background, text-accent, var(--color-x)...).
+   ========================================================================== */
+
+:root {
+  /* Light — mặc định toàn site */
+  --background: #f5f5f7;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --accent: #0f467c;
+  --on-accent: #ffffff;
+  --muted: #e8ecf1;
+  --muted-foreground: #475569;
+  --border: #e2e8f0;
+  --destructive: #dc2626;
+  --on-destructive: #ffffff;
+  --ring: #0f467c;
+
+  /* Dark-section — dùng CHỌN LỌC (hero, trang Matter Smarthome), KHÔNG phải dark-mode toggle */
+  --background-dark: #0f172a;
+  --foreground-dark: #f8fafc;
+  --card-dark: #1b2336;
+  --muted-foreground-dark: #94a3b8;
+  --border-dark: #334155;
+
+  /* Layout tổng thể */
+  --page-max: 1920px;
+  --container-max: 1280px;
+  --container-padding-mobile: 16px;
+  --container-padding-tablet: 32px;
+  --container-padding-desktop: 64px;
+
+  /* Spacing scale — mọi padding/margin phải là 1 trong các giá trị này */
+  --space-xs: 0.25rem; /* 4px */
+  --space-sm: 0.5rem; /* 8px */
+  --space-md: 1rem; /* 16px */
+  --space-lg: 1.5rem; /* 24px */
+  --space-xl: 2rem; /* 32px */
+  --space-2xl: 3rem; /* 48px */
+  --space-3xl: 4rem; /* 64px */
+
+  /* Radius / shadow — Bento Grid */
+  --card-radius: 20px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-on-destructive: var(--on-destructive);
+  --color-ring: var(--ring);
+
+  --color-background-dark: var(--background-dark);
+  --color-foreground-dark: var(--foreground-dark);
+  --color-card-dark: var(--card-dark);
+  --color-muted-foreground-dark: var(--muted-foreground-dark);
+  --color-border-dark: var(--border-dark);
+
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family:
+    var(--font-sans),
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    system-ui,
+    sans-serif;
+}
