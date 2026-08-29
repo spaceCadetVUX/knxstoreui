@@ -107,13 +107,17 @@ export function Navbar() {
             className="shrink-0 transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
             aria-label="KNXStore — Trang chủ"
           >
+            {/* Logo mới nhận từ Zalo (KNX STORE_Logo 3.svg, 2026-08-29) — bản gốc canvas vuông
+                481.89x481.89 nhưng chữ chỉ chiếm 1 dải ngang hẹp giữa canvas; đã crop lại
+                viewBox trong file (public/logo/knxstore-logo.svg) khớp bounding box thật của
+                nét chữ (đo bằng getBBox) để không bị khoảng trắng thừa trên/dưới khi hiển thị. */}
             <Image
-              src="/logo/knxstore-logo-navy.png"
+              src="/logo/knxstore-logo.svg"
               alt="KNXStore"
-              width={168}
-              height={31}
+              width={384}
+              height={61}
               priority
-              className="h-7 w-auto sm:h-8"
+              className="h-5 w-auto sm:h-6"
             />
           </Link>
 
