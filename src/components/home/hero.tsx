@@ -65,7 +65,8 @@ const protocolLogos = [
 
 export function Hero() {
   return (
-    <section className="mx-auto max-w-[var(--container-max)] px-4 pb-16 pt-16 text-center md:px-8 md:pb-24 md:pt-24 lg:px-16">
+    <section className="bg-card px-4 pb-16 pt-16 text-center md:px-8 md:pb-24 md:pt-24">
+      <div className="mx-auto max-w-[var(--container-max)] lg:px-16">
       <Reveal className="mx-auto max-w-3xl">
         <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
           Nền tảng phân phối thiết bị tự động hóa tòa nhà

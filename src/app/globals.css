@@ -13,14 +13,14 @@
   --foreground: #1d1d1f;
   --card: #ffffff;
   --card-foreground: #1d1d1f;
-  --accent: #0f467c;
+  --accent: #0071e3; /* Xanh signature Apple (thay navy #0f467c cũ) */
   --on-accent: #ffffff;
   --muted: #e8ecf1;
   --muted-foreground: #475569;
   --border: #e2e8f0;
   --destructive: #dc2626;
   --on-destructive: #ffffff;
-  --ring: #0f467c;
+  --ring: #0071e3;
 
   /* Dark-section — dùng CHỌN LỌC (hero, trang Matter Smarthome), KHÔNG phải dark-mode toggle */
   --background-dark: #0f172a;
@@ -78,10 +78,14 @@
 body {
   background: var(--color-background);
   color: var(--color-foreground);
+  /* -apple-system/BlinkMacSystemFont ưu tiên trước Inter — macOS/iOS render SF Pro thật,
+     các OS khác fallback Segoe UI/Roboto rồi mới tới Inter (var(--font-sans)). */
   font-family:
-    var(--font-sans),
     -apple-system,
     BlinkMacSystemFont,
+    "SF Pro Text",
+    "Helvetica Neue",
+    var(--font-sans),
     "Segoe UI",
     system-ui,
     sans-serif;

@@ -99,7 +99,7 @@ export function SearchBox({
           onFocus={() => query.trim() && setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Tìm kiếm sản phẩm..."
-          className={`w-full rounded-full border border-border bg-muted/60 ${inputPadding} pl-4 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-shadow duration-200 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 focus-visible:shadow-[0_0_0_3px_rgba(15,70,124,0.10)]`}
+          className={`w-full rounded-full border border-border bg-muted/60 ${inputPadding} pl-4 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-shadow duration-200 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 focus-visible:shadow-[0_0_0_3px_rgba(0,113,227,0.10)]`}
         />
         <MagnifyingGlass
           size={18}

@@ -43,9 +43,11 @@ function isActiveHref(pathname: string, href: string) {
 
 // "group" để NavUnderline bên trong nghe được hover của link cha. Gạch chân là 1 span
 // absolute riêng (xem NavUnderline) nên đổi active/hover không đụng box model — không layout shift.
+// Font + màu Apple giờ đã là token toàn site (--font-sans/body font-family, --accent trong
+// globals.css) nên nav chỉ cần reference text-accent như bình thường, không hardcode nữa.
 const navLinkClass = (active: boolean) =>
-  `group relative flex items-center gap-1 py-2 text-[15px] transition-colors cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-    active ? "font-semibold text-accent" : "text-foreground/90 hover:text-accent"
+  `group relative flex items-center gap-1 py-2 text-[15px] tracking-[-0.012em] transition-colors cursor-pointer rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+    active ? "font-semibold text-accent" : "font-medium text-foreground/80 hover:text-accent"
   }`;
 
 /** Gạch chân "expand" từ trái sang phải khi hover (scaleX 0→1, 200ms); active thì luôn hiện sẵn. */
@@ -206,7 +208,7 @@ export function Navbar() {
                 href="/"
                 onClick={() => setMobileOpen(false)}
                 aria-current={isActiveHref(pathname, "/") ? "page" : undefined}
-                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/") ? "font-semibold text-accent" : ""}`}
+                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/") ? "font-medium text-accent" : ""}`}
               >
                 Trang chủ
               </Link>
@@ -217,7 +219,7 @@ export function Navbar() {
                 href="/du-an"
                 onClick={() => setMobileOpen(false)}
                 aria-current={isActiveHref(pathname, "/du-an") ? "page" : undefined}
-                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/du-an") ? "font-semibold text-accent" : ""}`}
+                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/du-an") ? "font-medium text-accent" : ""}`}
               >
                 Dự án
               </Link>
@@ -225,7 +227,7 @@ export function Navbar() {
                 href="/blog"
                 onClick={() => setMobileOpen(false)}
                 aria-current={isActiveHref(pathname, "/blog") ? "page" : undefined}
-                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/blog") ? "font-semibold text-accent" : ""}`}
+                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/blog") ? "font-medium text-accent" : ""}`}
               >
                 Blog
               </Link>
