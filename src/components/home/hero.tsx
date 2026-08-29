@@ -65,37 +65,41 @@ const protocolLogos = [
 
 export function Hero() {
   return (
-    <section className="bg-card px-4 pb-16 pt-16 text-center md:px-8 md:pb-24 md:pt-24">
-      <div className="mx-auto max-w-[var(--container-max)] lg:px-16">
-      <Reveal className="mx-auto max-w-3xl">
-        <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-          Nền tảng phân phối thiết bị tự động hóa tòa nhà
-        </h1>
-        <p className="mt-4 text-base text-muted-foreground sm:text-lg">
-          700+ sản phẩm chính hãng · 68 thương hiệu · 79 danh mục
-        </p>
-      </Reveal>
+    // bg-card (#ffffff token) full-bleed để hero thành dải nền trắng edge-to-edge, tách khỏi
+    // nền xám --background của phần còn lại trang. Container căn giữa/padding ngang chuyển
+    // vào div con để không cộng dồn padding với section ngoài.
+    <section className="bg-card pb-16 pt-16 text-center md:pb-24 md:pt-24">
+      <div className="mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
+        <Reveal className="mx-auto max-w-3xl">
+          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            Nền tảng phân phối thiết bị tự động hóa tòa nhà
+          </h1>
+          <p className="mt-4 text-base text-muted-foreground sm:text-lg">
+            700+ sản phẩm chính hãng · 68 thương hiệu · 79 danh mục
+          </p>
+        </Reveal>
 
-      <Reveal delayMs={100} className="mt-12 sm:mt-16">
-        <ul className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-14">
-          {protocolLogos.map((logo) => (
-            <li key={logo.name} className="flex items-center">
-              <Link
-                href={logo.href}
-                className="inline-flex rounded-md transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:hover:translate-y-0"
-              >
-                <Image
-                  src={logo.src}
-                  alt={logo.name}
-                  width={logo.width}
-                  height={logo.height}
-                  className={`w-auto ${logo.heightClass}`}
-                />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </Reveal>
+        <Reveal delayMs={100} className="mt-12 sm:mt-16">
+          <ul className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-14">
+            {protocolLogos.map((logo) => (
+              <li key={logo.name} className="flex items-center">
+                <Link
+                  href={logo.href}
+                  className="inline-flex rounded-md transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:hover:translate-y-0"
+                >
+                  <Image
+                    src={logo.src}
+                    alt={logo.name}
+                    width={logo.width}
+                    height={logo.height}
+                    className={`w-auto ${logo.heightClass}`}
+                  />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
+      </div>
     </section>
   );
 }

@@ -99,7 +99,11 @@ export function SearchBox({
           onFocus={() => query.trim() && setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Tìm kiếm sản phẩm..."
-          className={`w-full rounded-full border border-border bg-muted/60 ${inputPadding} pl-4 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-shadow duration-200 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 focus-visible:shadow-[0_0_0_3px_rgba(0,113,227,0.10)]`}
+          // Nền search trước dùng bg-muted/60 (bán trong suốt) + border — hợp khi header nền xám
+          // mờ (--background cũ). Header giờ nền trắng đặc (bg-card) nên đổi sang fill xám đặc
+          // bg-muted, bỏ viền — pill xám kín trên nền trắng kiểu Apple (Spotlight/App Store),
+          // không cần border để phân định vì độ tương phản đã đủ.
+          className={`w-full rounded-full bg-muted ${inputPadding} pl-4 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-shadow duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:shadow-[0_0_0_4px_rgba(0,113,227,0.12)]`}
         />
         <MagnifyingGlass
           size={18}

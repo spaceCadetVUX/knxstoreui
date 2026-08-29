@@ -84,8 +84,8 @@ export function Navbar() {
     <header
       className={`sticky top-0 z-50 border-b border-border/70 backdrop-saturate-150 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
         scrolled
-          ? "bg-[rgba(245,245,247,0.88)] shadow-sm backdrop-blur-xl"
-          : "bg-[rgba(245,245,247,0.72)] backdrop-blur-lg"
+          ? "bg-card/90 shadow-sm backdrop-blur-xl"
+          : "bg-card/75 backdrop-blur-lg"
       }`}
     >
       <a
