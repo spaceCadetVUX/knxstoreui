@@ -77,6 +77,25 @@ export function Hero() {
           <p className="mt-4 text-base text-muted-foreground sm:text-lg">
             700+ sản phẩm chính hãng · 68 thương hiệu · 79 danh mục
           </p>
+
+          {/* CTA chính (bg-foreground, tối đậm — kiểu nút "Buy" pill của Apple) + CTA phụ
+              outline, để điều hướng ngay khi vào trang thay vì chỉ có logo giao thức bên dưới.
+              text-card (#ffffff token) thay vì hardcode "white" để chữ trên nút tối vẫn theo
+              token màu chung. */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/giai-phap"
+              className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-card shadow-sm transition-[filter,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+            >
+              Khám phá giải pháp
+            </Link>
+            <Link
+              href="/lien-he"
+              className="inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors duration-150 ease-out hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              Liên hệ tư vấn
+            </Link>
+          </div>
         </Reveal>
 
         <Reveal delayMs={100} className="mt-12 sm:mt-16">
