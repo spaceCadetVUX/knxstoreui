@@ -18,7 +18,7 @@ import {
   topBrands,
   type NavGroup,
 } from "./nav-data";
-import { Reveal } from "./reveal";
+import { Reveal, useDelayedUnmount } from "./reveal";
 import { SearchBox } from "./search-box";
 
 type NavItem =
@@ -62,12 +62,14 @@ function NavUnderline({ active }: { active: boolean }) {
   );
 }
 
-// Nút CTA duy nhất trong nav — solid fill, hover đơn giản: lift nhẹ + sáng hơn, không pointer-tracking.
+// Nút CTA duy nhất trong nav — solid fill navy trầm (--nav-cta, không phải --accent chuẩn
+// site — xem globals.css), hover đơn giản: lift nhẹ + sáng hơn, không pointer-tracking.
 const ctaClass =
-  "inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-on-accent shadow-sm transition-[filter,box-shadow,transform] duration-150 ease-out cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0";
+  "inline-flex items-center gap-2 rounded-full bg-nav-cta px-4 py-2 text-sm font-semibold text-on-nav-cta shadow-md transition-[filter,box-shadow,transform] duration-150 ease-out cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobilePanelMounted = useDelayedUnmount(mobileOpen);
   const [scrolled, setScrolled] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
   // Chỉ cắt overflow trong lúc row 2 đang animate co/giãn chiều cao (grid-rows trick cần vậy
@@ -271,9 +273,10 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile panel */}
-      {mobileOpen && (
-        <Reveal className="border-t border-border/70 bg-card md:hidden">
+      {/* Mobile panel — giữ mounted thêm 200ms lúc đóng (useDelayedUnmount) để Reveal chạy hết
+          hiệu ứng fade-out, thay vì biến mất tức thì như trước. */}
+      {mobilePanelMounted && (
+        <Reveal show={mobileOpen} className="border-t border-border/70 bg-card md:hidden">
           <div className="mx-auto max-w-[var(--container-max)] px-4 py-4">
             <SearchBox variant="mobile" className="mb-4" />
 
@@ -342,6 +345,9 @@ function CartBadge() {
 
 function NavDropdown({ group, active }: { group: NavGroup; active: boolean }) {
   const [open, setOpen] = useState(false);
+  // Giữ panel mounted thêm 200ms lúc đóng để Reveal chạy hết hiệu ứng fade-out thay vì bị gỡ
+  // khỏi DOM ngay — đây là phần khiến mega menu trước đây "biến mất" thay vì mượt.
+  const menuMounted = useDelayedUnmount(open);
   const rootRef = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -409,8 +415,9 @@ function NavDropdown({ group, active }: { group: NavGroup; active: boolean }) {
         <NavUnderline active={active || open} />
       </button>
 
-      {open && (
+      {menuMounted && (
         <Reveal
+          show={open}
           role="menu"
           className="absolute left-0 top-full z-50 mt-2 w-72 rounded-[var(--card-radius)] border border-border bg-card p-2 shadow-lg"
         >
@@ -454,6 +461,18 @@ function MobileGroup({
   onNavigate: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [openHeight, setOpenHeight] = useState(0);
+
+  // Animate max-height (px đo thật qua scrollHeight) thay vì grid-template-rows 0fr/1fr.
+  // Lý do đổi: grid-rows đo bằng đơn vị fr chỉ mới được các engine hiện đại hỗ trợ interpolate
+  // mượt — trên WebView cũ/hạn chế (Zalo in-app browser, Android WebView đời thấp, phổ biến ở
+  // tệp khách B2C của KNXStore) nó có thể fallback về nhảy tức thì thay vì animate, đúng kiểu
+  // "giật/tệ" khi test trên mobile thật dù desktop dev vẫn mượt bình thường. max-height/px là
+  // thuộc tính transition cơ bản nhất, được hỗ trợ ổn định ở mọi engine.
+  useEffect(() => {
+    if (open && contentRef.current) setOpenHeight(contentRef.current.scrollHeight);
+  }, [open, group.items.length]);
 
   return (
     <div className="py-1">
@@ -471,31 +490,28 @@ function MobileGroup({
         />
       </button>
 
-      {/* Grid trick: transition từ 0fr -> 1fr để animate ra intrinsic height mượt, không cần đo px */}
       <div
-        className="grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none"
-        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+        className="overflow-hidden transition-[max-height] duration-300 ease-out motion-reduce:transition-none"
+        style={{ maxHeight: open ? openHeight : 0 }}
       >
-        <div className="overflow-hidden">
-          <div className="flex flex-col gap-1 pb-2 pl-3">
-            {group.items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onNavigate}
-                className="py-2 text-sm text-muted-foreground cursor-pointer hover:text-accent"
-              >
-                {item.label}
-              </Link>
-            ))}
+        <div ref={contentRef} className="flex flex-col gap-1 pb-2 pl-3">
+          {group.items.map((item) => (
             <Link
-              href={group.viewAllHref}
+              key={item.href}
+              href={item.href}
               onClick={onNavigate}
-              className="py-2 text-sm font-medium text-accent cursor-pointer"
+              className="py-2 text-sm text-muted-foreground cursor-pointer hover:text-accent"
             >
-              {group.viewAllLabel} →
+              {item.label}
             </Link>
-          </div>
+          ))}
+          <Link
+            href={group.viewAllHref}
+            onClick={onNavigate}
+            className="py-2 text-sm font-medium text-accent cursor-pointer"
+          >
+            {group.viewAllLabel} →
+          </Link>
         </div>
       </div>
     </div>

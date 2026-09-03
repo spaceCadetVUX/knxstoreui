@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowUpRight } from "@phosphor-icons/react";
 import { Reveal } from "@/components/nav/reveal";
 
 /**
@@ -65,41 +66,81 @@ const protocolLogos = [
 
 export function Hero() {
   return (
-    // bg-card (#ffffff token) full-bleed để hero thành dải nền trắng edge-to-edge, tách khỏi
-    // nền xám --background của phần còn lại trang. Container căn giữa/padding ngang chuyển
-    // vào div con để không cộng dồn padding với section ngoài.
-    <section className="bg-card pb-16 pt-16 text-center md:pb-24 md:pt-24">
-      <div className="mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
+    // relative + overflow-hidden để làm nền cho ảnh absolute bên dưới. bg-card vẫn giữ làm màu
+    // nền dự phòng (trước khi ảnh load xong, và cho dải rất sát mép trên nơi gradient còn gần
+    // như 100% đặc). h-screen thay cho pb lớn: section cao đúng 1 viewport, ảnh nền lấp đầy
+    // toàn bộ chiều cao đó (object-cover) thay vì kéo dài theo padding-bottom như bản trước.
+    <section className="relative flex h-[90vh] min-h-[90vh] flex-col justify-center overflow-hidden bg-card pt-16 text-center md:pt-24">
+      {/* Nền ảnh full-bleed + overlay gradient trắng→trong suốt theo chiều dọc (top→bottom):
+          đặc (from-card, ~100%) ở dải trần nhà sát navbar, hạ dần (via-card/60, dừng ở 45%
+          chiều cao) qua vùng text để chữ tối vẫn đọc rõ mà kiến trúc phía sau vẫn lờ mờ thấy
+          được, rồi trong suốt hoàn toàn (to-transparent, đạt mốc ở 75% — sớm hơn đáy ảnh) để
+          dải sàn gỗ/logo phía dưới hiện sắc nét, không bị phủ trắng. Khác vignette toả từ MÉP
+          (trái/phải/góc) — đây là gradient 1 CHIỀU dọc duy nhất nên không làm ảnh "đục" quanh
+          viền như bản trước đó. z-0 mặc định (positioned, DOM đứng trước content nên bị content
+          vẽ đè lên, không cần z-index thủ công). */}
+      <div aria-hidden="true" className="absolute inset-0">
+        <Image
+          src="/hero/office-showcase.png"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-card from-0% via-card/60 via-45% to-transparent to-75%" />
+      </div>
+
+      <div className="relative mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
         <Reveal className="mx-auto max-w-3xl">
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+          <h1 className="font-onest text-4xl font-semibold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             Nền tảng phân phối thiết bị tự động hóa tòa nhà
           </h1>
-          <p className="mt-4 text-base text-muted-foreground sm:text-lg">
+          <p className="mt-4 text-base font-medium text-foreground/60 sm:text-lg">
             700+ sản phẩm chính hãng · 68 thương hiệu · 79 danh mục
           </p>
 
-          {/* CTA chính (bg-foreground, tối đậm — kiểu nút "Buy" pill của Apple) + CTA phụ
-              outline, để điều hướng ngay khi vào trang thay vì chỉ có logo giao thức bên dưới.
-              text-card (#ffffff token) thay vì hardcode "white" để chữ trên nút tối vẫn theo
-              token màu chung. */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          {/* CTA chính (bg-foreground, tối đậm — kiểu nút "Buy" pill của Apple) + CTA phụ dạng
+              text-link (không còn border pill) kèm icon mũi tên, đồng ngôn ngữ với nút
+              "Matter Smarthome" trên header — để điều hướng ngay khi vào trang thay vì chỉ có
+              logo giao thức bên dưới. text-card (#ffffff token) thay vì hardcode "white" để
+              chữ trên nút tối vẫn theo token màu chung. */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
             <Link
               href="/giai-phap"
-              className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-card shadow-sm transition-[filter,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-md hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              className="inline-flex items-center justify-center rounded-full bg-foreground px-6 py-3 text-sm font-semibold text-card shadow-md transition-[filter,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
               Khám phá giải pháp
             </Link>
             <Link
               href="/lien-he"
-              className="inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-sm font-semibold text-foreground transition-colors duration-150 ease-out hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="group inline-flex items-center gap-1.5 rounded-md px-2 py-3 text-sm font-semibold text-foreground transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Liên hệ tư vấn
+              <ArrowUpRight
+                size={16}
+                weight="bold"
+                aria-hidden="true"
+                className="transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
             </Link>
           </div>
         </Reveal>
 
-        <Reveal delayMs={100} className="mt-12 sm:mt-16">
-          <ul className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-8 sm:gap-x-14">
+        {/* Dải frosted-glass sau hàng logo: tách cụm logo khỏi ảnh nền bằng 1 lớp kính mờ
+            (backdrop-blur) thay vì để logo nổi trực tiếp trên ảnh kiến trúc — vân gỗ sàn phía
+            sau vẫn "lộ" qua nhưng đã bị blur, không cạnh tranh thị giác với logo. Cùng pattern
+            backdrop-blur đã dùng ở navbar.tsx (header), không phải kỹ thuật mới trong codebase.
+            mask-image (linear-gradient đen→trong suốt) làm cả blur lẫn tint tan dần từ trên
+            (full effect, ngay sau logo) xuống dưới (không còn effect) — không dùng opacity vì
+            opacity giảm đều độ TRONG SUỐT của cả lớp chứ không tắt riêng backdrop-blur, mask
+            mới tắt được chính filter đó theo vị trí. */}
+        <Reveal delayMs={100} className="relative mt-12 sm:mt-16">
+          <div
+            aria-hidden="true"
+            className="absolute -inset-x-6 -inset-y-4 rounded-3xl bg-card/40 backdrop-blur-md [mask-image:linear-gradient(to_bottom,black,transparent)] [-webkit-mask-image:linear-gradient(to_bottom,black,transparent)] sm:-inset-x-10"
+          />
+          <ul className="relative mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-8 py-2 sm:gap-x-14">
             {protocolLogos.map((logo) => (
               <li key={logo.name} className="flex items-center">
                 <Link
