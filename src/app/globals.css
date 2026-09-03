@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* Tắt CSS Scroll Anchoring toàn site: khi navbar row 2 collapse/expand theo hướng scroll,
+   chiều cao header đổi làm nội dung bên dưới dịch chuyển — trình duyệt tự bù trừ scrollY để
+   giữ anchor node đứng yên, và bù trừ đó lại bị scroll-listener hiểu nhầm là user đang scroll,
+   gây vòng lặp đóng/mở liên tục gần điểm threshold. Xem src/components/nav/navbar.tsx. */
+html {
+  overflow-anchor: none;
+}
+
 /* ==========================================================================
    KNXStore Design Tokens
    Nguồn chân lý: design-system/knxstore/MASTER.md

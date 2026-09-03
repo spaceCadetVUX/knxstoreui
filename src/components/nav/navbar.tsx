@@ -69,11 +69,45 @@ const ctaClass =
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [navCollapsed, setNavCollapsed] = useState(false);
+  const lastScrollY = useRef(0);
+  // Timestamp tới khi nào bỏ qua toggle do scroll gây ra. Ngay sau khi row 2 đổi trạng thái,
+  // chiều cao header đổi làm nội dung dưới dịch chuyển — trình duyệt (scroll anchoring) có thể
+  // tự bù trừ scrollY gần như ngay lập tức, và bù trừ đó lại bị đọc nhầm thành user scroll,
+  // gây vòng lặp đóng/mở liên tục. Khoá lại trong đúng thời lượng transition (300ms) + buffer.
+  const suppressUntil = useRef(0);
   const pathname = usePathname();
 
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 8);
+      const y = window.scrollY;
+      setScrolled(y > 8);
+
+      const now = Date.now();
+      if (now < suppressUntil.current) {
+        lastScrollY.current = y;
+        return;
+      }
+
+      // Hide-on-scroll-down / show-on-scroll-up cho row 2, có ngưỡng 10px chống rung
+      // khi scroll nhẹ (trackpad/momentum). Luôn expand khi ở sát top trang.
+      if (y <= 8) {
+        setNavCollapsed((prev) => {
+          if (prev) suppressUntil.current = now + 350;
+          return false;
+        });
+      } else if (y > lastScrollY.current + 10) {
+        setNavCollapsed((prev) => {
+          if (!prev) suppressUntil.current = now + 350;
+          return true;
+        });
+      } else if (y < lastScrollY.current - 10) {
+        setNavCollapsed((prev) => {
+          if (prev) suppressUntil.current = now + 350;
+          return false;
+        });
+      }
+      lastScrollY.current = y;
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -95,13 +129,9 @@ export function Navbar() {
         Bỏ qua, đến nội dung chính
       </a>
 
-      {/* Row 1 — logo / search / cart / account */}
+      {/* Row 1 — logo / search / cart / account. Luôn full height, không collapse khi scroll. */}
       <div className="mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
-        <div
-          className={`flex items-center justify-between gap-4 transition-[height] duration-300 ease-out sm:gap-6 ${
-            scrolled ? "h-14" : "h-16"
-          }`}
-        >
+        <div className="flex h-16 items-center justify-between gap-4 sm:gap-6">
           <Link
             href="/"
             className="shrink-0 transition-transform duration-150 hover:scale-[1.03] active:scale-[0.98]"
@@ -167,36 +197,45 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Row 2 — nav links + CTA (desktop) */}
-      <div className="hidden border-t border-border/70 md:block">
-        <div className="mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
-          <div className="flex h-12 items-center justify-between">
-            <nav className="flex items-center gap-6" aria-label="Điều hướng chính">
-              {navItems.map((item) =>
-                item.kind === "link" ? (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={isActiveHref(pathname, item.href) ? "page" : undefined}
-                    className={navLinkClass(isActiveHref(pathname, item.href))}
-                  >
-                    {item.label}
-                    <NavUnderline active={isActiveHref(pathname, item.href)} />
-                  </Link>
-                ) : (
-                  <NavDropdown
-                    key={item.group.label}
-                    group={item.group}
-                    active={isActiveHref(pathname, item.group.href)}
-                  />
-                ),
-              )}
-            </nav>
+      {/* Row 2 — nav links + CTA (desktop). Collapse khi scroll xuống, expand khi scroll lên
+          hoặc ở top trang; dùng grid trick (0fr/1fr) để animate ra intrinsic height mượt. */}
+      <div
+        aria-hidden={navCollapsed}
+        className="hidden grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none md:grid"
+        style={{ gridTemplateRows: navCollapsed ? "0fr" : "1fr" }}
+      >
+        <div className="overflow-hidden">
+          <div className="border-t border-border/70">
+            <div className="mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
+              <div className="flex h-12 items-center justify-between">
+                <nav className="flex items-center gap-6" aria-label="Điều hướng chính">
+                  {navItems.map((item) =>
+                    item.kind === "link" ? (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={isActiveHref(pathname, item.href) ? "page" : undefined}
+                        className={navLinkClass(isActiveHref(pathname, item.href))}
+                      >
+                        {item.label}
+                        <NavUnderline active={isActiveHref(pathname, item.href)} />
+                      </Link>
+                    ) : (
+                      <NavDropdown
+                        key={item.group.label}
+                        group={item.group}
+                        active={isActiveHref(pathname, item.group.href)}
+                      />
+                    ),
+                  )}
+                </nav>
 
-            <Link href="/giai-phap/matter-smarthome" className={ctaClass}>
-              Matter Smarthome
-              <ArrowUpRight size={16} weight="bold" aria-hidden="true" />
-            </Link>
+                <Link href="/giai-phap/matter-smarthome" className={ctaClass}>
+                  Matter Smarthome
+                  <ArrowUpRight size={16} weight="bold" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </div>
