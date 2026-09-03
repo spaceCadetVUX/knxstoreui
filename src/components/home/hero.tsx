@@ -1,9 +1,116 @@
 "use client"; // Reveal dùng useEffect/useState (mount-flag animation)
 
+import { useId, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "@phosphor-icons/react";
+import {
+  ArrowUpRight,
+  Buildings,
+  Building,
+  Crane,
+  House,
+  type Icon,
+} from "@phosphor-icons/react";
 import { Reveal } from "@/components/nav/reveal";
+import { SearchBox } from "@/components/nav/search-box";
+import {
+  categoryGroupShortLabel,
+  categoryIcon,
+  productCategories,
+  solutions,
+  topBrands,
+} from "@/components/nav/nav-data";
+import { shopCategories } from "./shop-categories-data";
+
+// Href/label giống hệt product-highlights.tsx (VIEW_ALL_HREF/VIEW_ALL_LABEL) — 1 nguồn chân lý
+// cho "trang tất cả sản phẩm", tránh 2 nơi lệch nhau nếu route đổi sau này.
+const ALL_PRODUCTS_HREF = "/san-pham";
+const ALL_PRODUCTS_LABEL = "Xem tất cả sản phẩm";
+
+// Chip gợi ý (P1) — 6 danh mục nhiều SKU nhất, lấy đúng thứ tự đã sort giảm dần trong
+// shopCategories (shop-categories-data.ts, dữ liệu thật từ catalog) — không tự bịa danh sách
+// riêng cho Hero để tránh 2 nguồn "danh mục hot" lệch nhau giữa Hero và ShopByCategory.
+const quickCategoryChips = shopCategories.slice(0, 6);
+
+// solutions (nav-data.ts) không có field icon riêng (dùng cho dropdown navbar, chỉ cần text) —
+// map cục bộ CHỈ trong hero.tsx theo href, không sửa nav-data.ts/kiểu NavGroupItem để tránh
+// đụng tới navbar.tsx (không cần icon) và giữ đúng ranh giới "chỉ đọc data từ nav/".
+const solutionIconByHref: Record<string, Icon> = {
+  "/giai-phap/nha-o": House,
+  "/giai-phap/khach-san": Buildings,
+  "/giai-phap/van-phong": Building,
+  "/giai-phap/du-an": Crane,
+};
+
+type TabTile = {
+  key: string;
+  label: string;
+  href: string;
+  meta?: string;
+  icon?: Icon;
+};
+
+type HeroTab = {
+  id: string;
+  label: string;
+  items: TabTile[];
+  gridColsClass: string;
+  viewAllHref: string;
+  viewAllLabel: string;
+};
+
+// P2 — 3 tab "khám phá có cấu trúc", mỗi tab tái dùng ĐÚNG data đã có trong nav-data.ts (nguồn
+// đang cấp cho dropdown navbar) — không tạo danh sách song song, đổi 1 nơi là đồng bộ cả 2 chỗ.
+// Cột lưới (gridColsClass) chọn riêng theo SỐ Ô của từng tab để không có hàng cuối lẻ loi
+// (6→2/3/6, 4→2/4, 8→2/4 đều chia hết) — cùng nguyên tắc đã áp dụng ở shop-by-category.tsx.
+const heroTabs: HeroTab[] = [
+  {
+    id: "danh-muc",
+    label: productCategories.label,
+    items: productCategories.items.map((item) => ({
+      key: item.href,
+      label: item.key ? categoryGroupShortLabel[item.key] : item.label,
+      href: item.href,
+      meta: item.meta,
+      icon: item.key ? categoryIcon[item.key] : undefined,
+    })),
+    gridColsClass: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
+    viewAllHref: productCategories.viewAllHref,
+    viewAllLabel: productCategories.viewAllLabel,
+  },
+  {
+    id: "giai-phap",
+    label: solutions.label,
+    items: solutions.items.map((item) => ({
+      key: item.href,
+      label: item.label,
+      href: item.href,
+      icon: solutionIconByHref[item.href],
+    })),
+    gridColsClass: "grid-cols-2 lg:grid-cols-4",
+    viewAllHref: solutions.viewAllHref,
+    viewAllLabel: solutions.viewAllLabel,
+  },
+  {
+    id: "thuong-hieu",
+    label: topBrands.label,
+    // Brand không có icon ngữ nghĩa như danh mục/giải pháp — tile dùng chữ cái đầu (monogram,
+    // xem hàm initials() bên dưới) thay vì để trống, giữ đồng dạng "ô có ảnh nhỏ" với 2 tab kia.
+    items: topBrands.items.map((item) => ({
+      key: item.href,
+      label: item.label,
+      href: item.href,
+      meta: item.meta,
+    })),
+    gridColsClass: "grid-cols-2 sm:grid-cols-4",
+    viewAllHref: topBrands.viewAllHref,
+    viewAllLabel: topBrands.viewAllLabel,
+  },
+];
+
+function initials(label: string): string {
+  return label.slice(0, 2).toUpperCase();
+}
 
 /**
  * Logo giao thức/chuẩn thật — tải từ nguồn chính chủ (KNXStore là đối tác/nhà phân phối
@@ -65,12 +172,42 @@ const protocolLogos = [
 ];
 
 export function Hero() {
+  // P2 — state tab viết RIÊNG trong hero.tsx (không import chéo protocol-categories.tsx) để 2
+  // hệ tab độc lập hoàn toàn — đổi 1 bên không rủi ro ảnh hưởng bên kia. Cơ chế tablist/phím
+  // trái-phải giống protocol-categories.tsx, NHƯNG bỏ animation trượt translateX của file đó:
+  // translateX cần 1 "stage" cao cố định chứa cả 3 panel chồng lên nhau, mà 3 tab ở đây số ô
+  // rất khác nhau (6/4/8 ô, layout cột khác nhau) nên 1 chiều cao cố định sẽ để dư khoảng trắng
+  // rất lớn ở 2 tab ít ô hơn — ngược với mục tiêu Hero gọn theo nội dung (không còn `h-[90vh]`
+  // cố định, xem comment ở <section> bên dưới). Dùng `hidden` (ẩn/hiện trực tiếp, không giữ
+  // layout) để mỗi tab tự co theo đúng số ô của nó.
+  const [activeTab, setActiveTab] = useState(0);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const baseId = useId();
+
+  function goToTab(idx: number, focusTab = false) {
+    setActiveTab(idx);
+    if (focusTab) tabRefs.current[idx]?.focus();
+  }
+
+  function onTabKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, idx: number) {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      goToTab((idx + 1) % heroTabs.length, true);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      goToTab((idx - 1 + heroTabs.length) % heroTabs.length, true);
+    }
+  }
+
   return (
     // relative + overflow-hidden để làm nền cho ảnh absolute bên dưới. bg-card vẫn giữ làm màu
-    // nền dự phòng (trước khi ảnh load xong, và cho dải rất sát mép trên nơi gradient còn gần
-    // như 100% đặc). h-screen thay cho pb lớn: section cao đúng 1 viewport, ảnh nền lấp đầy
-    // toàn bộ chiều cao đó (object-cover) thay vì kéo dài theo padding-bottom như bản trước.
-    <section className="relative flex h-[90vh] min-h-[90vh] flex-col justify-center overflow-hidden bg-card pt-16 text-center md:pt-24">
+    // nền dự phòng (trước khi ảnh load xong). Chiều cao giờ theo NỘI DUNG (bỏ h-[90vh] cũ) —
+    // hero cũ ép đúng 1 viewport bất kể nội dung thật cao bao nhiêu, ép khách task-driven
+    // (search/lọc ngay, không đọc hero) phải cuộn qua vùng lifestyle họ không cần trước khi
+    // chạm được nội dung hữu ích tiếp theo. Xem hero-redesign-plan.md mục 7. Ảnh nền dùng
+    // next/image `fill` vẫn đúng với auto-height: div này `relative`, ảnh absolute inset-0 co
+    // theo chiều cao do các phần tử trong luồng (headline/panel) quyết định, không cần set cứng.
+    <section className="relative overflow-hidden bg-card pb-14 pt-16 text-center md:pb-20 md:pt-24">
       {/* Nền ảnh full-bleed + overlay gradient trắng→trong suốt theo chiều dọc (top→bottom):
           đặc (from-card, ~100%) ở dải trần nhà sát navbar, hạ dần (via-card/60, dừng ở 58%
           chiều cao — kéo dài hơn bản gốc (45%) để hàng CTA không rơi đúng điểm ảnh bắt đầu lộ
@@ -94,70 +231,202 @@ export function Hero() {
 
       <div className="relative mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
         <Reveal className="mx-auto max-w-3xl">
-          <h1 className="font-onest text-4xl font-light leading-normal tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-            Nền tảng phân phối thiết bị tự động hóa tòa nhà
+          {/* Cỡ chữ giảm 1 bậc so với bản cũ (4xl/5xl/6xl → 3xl/4xl/5xl) — headline giờ là
+              phần xác nhận bối cảnh ("đúng trang mình cần"), không còn phải gánh vai trò nội
+              dung chính để đọc lâu như hero lifestyle cũ.
+              font-semibold + leading-tight (thay font-light + leading-normal cũ) — chữ mảnh/thưa
+              hợp hero lifestyle trước đây, nhưng đặt trên 1 command panel chắc khối (viền, đổ
+              bóng, nút bấm đậm) thì nhìn lạc tông; đậm nét hơn để "hài hoà" đúng nghĩa thị giác
+              với phần dưới. "tự động hóa" tô accent — nối màu headline với hệ màu accent đang
+              lặp lại khắp panel (nút search, tab đang chọn, link "Xem tất cả"), đồng thời đúng
+              từ khoá giá trị cốt lõi nhất trong câu. whitespace-nowrap trên span này để cụm từ
+              không bị ngắt dòng giữa chừng (vd "tự động" 1 dòng, "hoá" rớt xuống dòng sau). */}
+          <h1 className="text-balance font-onest text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Nền tảng phân phối thiết bị{" "}
+            <span className="whitespace-nowrap text-accent">tự động hóa</span> tòa nhà
           </h1>
-          <p className="mt-4 text-base font-medium text-foreground/60 sm:text-lg">
-            700+ sản phẩm chính hãng · 68 thương hiệu · 79 danh mục
-          </p>
-
-          {/* CTA chính bg-accent (brand blue, không còn bg-foreground đen tuyền — đen đặc cạnh
-              ảnh sáng/thoáng tạo cảm giác quá nặng, xem trao đổi màu sắc hero) + CTA phụ dạng
-              text-link (không còn border pill) kèm icon mũi tên, đồng ngôn ngữ với nút
-              "Matter Smarthome" trên header — để điều hướng ngay khi vào trang thay vì chỉ có
-              logo giao thức bên dưới. text-on-accent (#ffffff token) thay vì hardcode "white" để
-              chữ trên nút vẫn theo token màu chung. */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            <Link
-              href="/giai-phap"
-              className="inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-semibold text-on-accent shadow-md transition-[filter,box-shadow,transform] duration-150 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-            >
-              Khám phá giải pháp
-            </Link>
-            <Link
-              href="/lien-he"
-              className="group inline-flex items-center gap-1.5 rounded-md px-2 py-3 text-sm font-semibold text-muted-foreground transition-colors duration-150 ease-out hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              Liên hệ tư vấn
-              <ArrowUpRight
-                size={16}
-                weight="bold"
-                aria-hidden="true"
-                className="transition-transform duration-150 ease-out group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </Link>
-          </div>
         </Reveal>
 
-        {/* Dải frosted-glass sau hàng logo: tách cụm logo khỏi ảnh nền bằng 1 lớp kính mờ
-            (backdrop-blur) thay vì để logo nổi trực tiếp trên ảnh kiến trúc — vân gỗ sàn phía
-            sau vẫn "lộ" qua nhưng đã bị blur, không cạnh tranh thị giác với logo. Cùng pattern
-            backdrop-blur đã dùng ở navbar.tsx (header), không phải kỹ thuật mới trong codebase.
-            Không còn mask-image gradient tan dần ở mép dưới (bỏ theo yêu cầu trực tiếp) — tấm
-            kính giờ đặc đều bg-card/78 toàn bộ khối, không tan mờ ở đáy nữa. */}
-        <Reveal delayMs={100} className="relative mt-12 sm:mt-16">
-          <div
-            aria-hidden="true"
-            className="absolute -inset-x-6 -inset-y-4 rounded-3xl bg-card/78 backdrop-blur-lg sm:-inset-x-10"
-          />
-          <ul className="relative mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-10 gap-y-8 py-2 sm:gap-x-14">
-            {protocolLogos.map((logo) => (
-              <li key={logo.name} className="flex items-center">
+        {/* Command panel — toàn bộ khối tương tác chính của Hero (search/chip/tab/logo), thay
+            cho 2 nút CTA + dải logo trần trước đây. Panel là 1 khối THẬT có padding/border/
+            radius riêng (không phải lớp nền tuyệt đối phủ sau nội dung) để mọi phần tử con bên
+            trong dùng chung 1 max-width/căn giữa, không phải tự khai lại. Xem hero-redesign-
+            plan.md (mục 1-5) để biết lý do đổi từ hero lifestyle sang command panel. */}
+        <Reveal delayMs={100} className="relative mt-10 sm:mt-14">
+          {/* Bỏ max-w-4xl cũ (panel hẹp hơn, dạt giữa, thừa lề 2 bên) — panel giờ full-width
+              trong đúng container `max-w-[var(--container-max)] px-4/md:px-8/lg:px-16` mà div
+              cha (dòng trên) và Row 2 của navbar.tsx (nav links + nút "Matter Smarthome") đang
+              dùng CHUNG, nên biên trái/phải của panel khớp thẳng hàng với biên "Trang chủ" ↔
+              "Matter Smarthome" trên nav — theo yêu cầu trực tiếp, đồng bộ độ rộng 2 khối. */}
+          <div className="rounded-3xl border border-border/60 bg-card/78 px-5 py-7 shadow-lg backdrop-blur-lg sm:px-8 sm:py-9">
+            {/* w-[95%] — theo yêu cầu trực tiếp: search bar gần bằng bề ngang panel (trước đó
+                bị giới hạn max-w-2xl theo lý do "line-length" ở mục 6.6 file plan, nhưng nhìn
+                thực tế lại hẹp/lệch tông so với chip/grid full-width bên dưới) — chừa đúng 5%
+                margin 2 bên thay vì full 100% để vẫn có khoảng thở nhẹ với viền panel. */}
+            <SearchBox variant="hero" className="w-full" />
+
+            {/* P1 — chip gợi ý + "Xem tất cả sản phẩm": hành động 1-chạm, hưởng lây chú ý vừa
+                dừng ở search nên đặt sát ngay dưới (mt-4, gần hơn hẳn khoảng cách xuống P2/P3
+                bên dưới — proximity grouping, xem mục 5 file plan). Chip là LINK THẲNG tới trang
+                danh mục (Phương án A, mục 4.2) — không fill vào ô search vì searchProducts chỉ
+                có 10 SP mock, nhồi tên danh mục vào đó dễ ra 0 kết quả. Hàng chip cuộn ngang ở
+                mobile (nhãn danh mục thật khá dài, vd "Điều khiển máy lạnh VRV/VRF"), wrap+căn
+                giữa từ sm trở lên. "Xem tất cả sản phẩm" tách thành dòng riêng bên dưới (không
+                nhét cuối hàng chip) để luôn thấy được ngay cả khi chưa cuộn hết hàng chip. */}
+            <div className="mt-4 space-y-2.5">
+              <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:justify-start sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden">
+                {quickCategoryChips.map((chip) => (
+                  <Link
+                    key={chip.href}
+                    href={chip.href}
+                    className="inline-flex shrink-0 items-center rounded-full border border-transparent bg-muted px-3 py-1.5 text-[11px] font-medium text-foreground/65 transition-colors duration-150 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-xs"
+                  >
+                    {chip.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="text-center">
                 <Link
-                  href={logo.href}
-                  className="inline-flex rounded-md transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:hover:translate-y-0"
+                  href={ALL_PRODUCTS_HREF}
+                  className="group inline-flex items-center gap-1 rounded-sm text-xs font-semibold text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-sm"
                 >
-                  <Image
-                    src={logo.src}
-                    alt={logo.name}
-                    width={logo.width}
-                    height={logo.height}
-                    className={`w-auto ${logo.heightClass}`}
+                  {ALL_PRODUCTS_LABEL}
+                  <ArrowUpRight
+                    size={13}
+                    weight="bold"
+                    aria-hidden="true"
+                    className="transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                   />
                 </Link>
-              </li>
-            ))}
-          </ul>
+              </div>
+            </div>
+
+            {/* P2 — tab "khám phá có cấu trúc": khoảng cách xuống đây (mt-8/mt-10) lớn hơn hẳn
+                khoảng P0→P1 (mt-4) — báo hiệu đây là 1 cụm chức năng khác (Gestalt proximity),
+                nhưng CHƯA phải mức ngắt lớn nhất (đó là trước dải logo P3, xem border-t bên
+                dưới). role=tablist/tab/tabpanel + phím trái-phải đầy đủ, tất cả panel LUÔN có
+                trong DOM (chỉ ẩn bằng `hidden`, không unmount) — cùng lý do SEO đã ghi ở
+                protocol-categories.tsx: nội dung tab vẫn được tính trọng số như nội dung thường. */}
+            <div className="mt-8 sm:mt-10">
+              <div
+                role="tablist"
+                aria-label="Khám phá theo"
+                className="flex flex-wrap justify-center gap-2"
+              >
+                {heroTabs.map((tab, idx) => {
+                  const isActive = idx === activeTab;
+                  return (
+                    <button
+                      key={tab.id}
+                      ref={(el) => {
+                        tabRefs.current[idx] = el;
+                      }}
+                      type="button"
+                      role="tab"
+                      id={`${baseId}-tab-${tab.id}`}
+                      aria-selected={isActive}
+                      aria-controls={`${baseId}-panel-${tab.id}`}
+                      tabIndex={isActive ? 0 : -1}
+                      onClick={() => goToTab(idx)}
+                      onKeyDown={(e) => onTabKeyDown(e, idx)}
+                      className={`inline-flex cursor-pointer items-center rounded-full border px-4 py-2 text-xs font-semibold transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:text-[13px] ${
+                        isActive
+                          ? "border-accent bg-accent text-on-accent"
+                          : "border-border bg-card text-foreground hover:border-accent hover:text-accent"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {heroTabs.map((tab, idx) => {
+                const isActive = idx === activeTab;
+                return (
+                  <div
+                    key={tab.id}
+                    id={`${baseId}-panel-${tab.id}`}
+                    role="tabpanel"
+                    aria-labelledby={`${baseId}-tab-${tab.id}`}
+                    hidden={!isActive}
+                    className="mt-5"
+                  >
+                    <ul className={`grid gap-2.5 ${tab.gridColsClass}`}>
+                      {tab.items.map((item) => (
+                        <li key={item.key}>
+                          <Link
+                            href={item.href}
+                            className="group flex h-full flex-col items-center gap-2 rounded-2xl border border-border bg-card px-2 py-4 text-center transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                          >
+                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-accent">
+                              {item.icon ? (
+                                <item.icon size={20} aria-hidden="true" />
+                              ) : (
+                                <span className="text-xs font-bold" aria-hidden="true">
+                                  {initials(item.label)}
+                                </span>
+                              )}
+                            </span>
+                            <span className="line-clamp-2 text-xs font-semibold leading-snug text-foreground sm:text-[13px]">
+                              {item.label}
+                            </span>
+                            {item.meta && (
+                              <span className="text-[11px] text-muted-foreground">
+                                {item.meta}
+                              </span>
+                            )}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-4 text-center">
+                      <Link
+                        href={tab.viewAllHref}
+                        className="group inline-flex items-center gap-1 rounded-sm text-xs font-semibold text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-sm"
+                      >
+                        {tab.viewAllLabel}
+                        <ArrowUpRight
+                          size={13}
+                          weight="bold"
+                          aria-hidden="true"
+                          className="transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                        />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* border-t tách "vùng khám phá" (search + chip + tab) khỏi "vùng tín hiệu uy tín"
+                (dải logo) — khoảng cách LỚN NHẤT trong toàn panel, đúng nguyên tắc proximity
+                grouping ở mục 5 file plan (P2→P3 xa hơn hẳn P0→P1/P1→P2). */}
+            <div className="mt-8 border-t border-border pt-6 sm:mt-10 sm:pt-8">
+              {/* grid-cols-2 cố định 2 logo/hàng ở mobile/tablet (< lg) — trước đây dùng flex-wrap
+                  tự ngắt dòng theo bề rộng nội dung, gây lỗi lệch 3+1 (KNX/Casambi/DALI-2 hàng
+                  trên, Matter lẻ loi hàng dưới) ở dải ~768-950px. Từ lg trở lên (đủ rộng cho cả
+                  4 logo + gap trên 1 hàng, đã đo thực tế) chuyển hẳn sang flex 1 hàng ngang. */}
+              <ul className="grid grid-cols-2 items-center justify-items-center gap-x-10 gap-y-8 sm:gap-x-14 lg:flex lg:flex-nowrap lg:justify-center">
+                {protocolLogos.map((logo) => (
+                  <li key={logo.name} className="flex items-center">
+                    <Link
+                      href={logo.href}
+                      className="inline-flex rounded-md transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:hover:translate-y-0"
+                    >
+                      <Image
+                        src={logo.src}
+                        alt={logo.name}
+                        width={logo.width}
+                        height={logo.height}
+                        className={`w-auto ${logo.heightClass}`}
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </Reveal>
       </div>
     </section>
