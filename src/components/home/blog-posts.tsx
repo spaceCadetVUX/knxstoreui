@@ -8,7 +8,7 @@ import { blogPosts, type BlogPost } from "./blog-posts-data";
 const SECTION_TITLE = "Bài viết gần đây";
 const VIEW_ALL_HREF = "/bai-viet";
 const VIEW_ALL_LABEL = "Xem tất cả bài viết";
-const POSTS_PER_PAGE = 3;
+const POSTS_PER_PAGE = 4;
 
 /**
  * "Bài viết gần đây" — đặt ngay dưới Faq (page.tsx). Header dùng đúng convention
@@ -44,13 +44,11 @@ export function BlogPosts() {
           </Link>
         </div>
 
-        {/* flex-wrap + justify-center (không dùng CSS grid) — 3 thẻ/trang không chia đều cho 2
-            cột ở mobile (base), grid-cols-2 sẽ để trống nửa hàng cuối rất lộ; flex-wrap cho thẻ
-            lẻ tự căn giữa ở dòng riêng. Cùng kỹ thuật đã dùng ở shop-by-category.tsx.
-            2 cột ngay từ mobile (theo yêu cầu trực tiếp — không còn 1 cột), lên 3 cột từ sm
-            (≥640px) luôn thay vì tăng dần 2→3 qua tablet, tránh thẻ 2-cột bị kéo quá to/thưa
-            ở khoảng 768–1023px trước khi đủ chỗ cho 3 cột. */}
-        <div className="mt-8 flex flex-wrap justify-center gap-3 sm:gap-6">
+        {/* CSS grid (không phải flex-wrap) — 4 thẻ/trang chia hết cho cả 2 và 4 cột nên không
+            có hàng cuối lẻ loi ở bất kỳ breakpoint nào (bỏ qua 3 cột vì 4 không chia hết cho 3).
+            2 cột ngay từ mobile (theo yêu cầu trực tiếp — không còn 1 cột), lên tối đa 4 cột/hàng
+            từ lg (≥1024px) khi đã đủ bề ngang cho card không bị bóp quá hẹp. */}
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4">
           {visiblePosts.map((post) => (
             <BlogPostCard key={post.id} post={post} />
           ))}
@@ -102,7 +100,7 @@ function BlogPostCard({ post }: { post: BlogPost }) {
   return (
     <Link
       href={post.href}
-      className="group flex w-[calc((100%-12px)/2)] flex-col overflow-hidden rounded-xl border border-border bg-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:w-[calc((100%-48px)/3)]"
+      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-card transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       {/* Ô ảnh: chưa có ảnh cover bài viết thật — placeholder phẳng bg-muted, cùng pattern đã
           dùng ở product-highlights.tsx/shop-by-category.tsx (không icon giả lập). */}

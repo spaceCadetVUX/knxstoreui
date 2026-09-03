@@ -200,10 +200,10 @@ export function Hero() {
   // hệ tab độc lập hoàn toàn — đổi 1 bên không rủi ro ảnh hưởng bên kia. Cơ chế tablist/phím
   // trái-phải giống protocol-categories.tsx, NHƯNG bỏ animation trượt translateX của file đó:
   // translateX cần 1 "stage" cao cố định chứa cả 3 panel chồng lên nhau, mà 3 tab ở đây số ô
-  // rất khác nhau (6/4/8 ô, layout cột khác nhau) nên 1 chiều cao cố định sẽ để dư khoảng trắng
-  // rất lớn ở 2 tab ít ô hơn — ngược với mục tiêu Hero gọn theo nội dung (không còn `h-[90vh]`
-  // cố định, xem comment ở <section> bên dưới). Dùng `hidden` (ẩn/hiện trực tiếp, không giữ
-  // layout) để mỗi tab tự co theo đúng số ô của nó.
+  // rất khác nhau (6/4/8 ô, layout cột khác nhau) nên "stage" cố định sẽ để dư khoảng trắng
+  // rất lớn ở 2 tab ít ô hơn. Dùng `hidden` (ẩn/hiện trực tiếp, không giữ layout) để mỗi tab
+  // tự co theo đúng số ô của nó — bản thân <section> Hero vẫn có chiều cao cố định 90vh (xem
+  // comment ở <section> bên dưới), phần cuộn nếu tràn là ở wrapper nội dung, không phải ở đây.
   const [activeTab, setActiveTab] = useState(0);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const baseId = useId();
@@ -231,13 +231,11 @@ export function Hero() {
 
   return (
     // relative + overflow-hidden để làm nền cho ảnh absolute bên dưới. bg-card vẫn giữ làm màu
-    // nền dự phòng (trước khi ảnh load xong). Chiều cao giờ theo NỘI DUNG (bỏ h-[90vh] cũ) —
-    // hero cũ ép đúng 1 viewport bất kể nội dung thật cao bao nhiêu, ép khách task-driven
-    // (search/lọc ngay, không đọc hero) phải cuộn qua vùng lifestyle họ không cần trước khi
-    // chạm được nội dung hữu ích tiếp theo. Xem hero-redesign-plan.md mục 7. Ảnh nền dùng
-    // next/image `fill` vẫn đúng với auto-height: div này `relative`, ảnh absolute inset-0 co
-    // theo chiều cao do các phần tử trong luồng (headline/panel) quyết định, không cần set cứng.
-    <section className="relative overflow-hidden bg-card pb-14 pt-16 text-center md:pb-20 md:pt-24">
+    // nền dự phòng (trước khi ảnh load xong). Chiều cao CỐ ĐỊNH 90vh theo yêu cầu 2026-09-03
+    // (không grow theo nội dung nữa) — nội dung được căn giữa theo chiều dọc (flex justify-center)
+    // trong khung 90vh đó; nếu nội dung (vd tab "Thương hiệu" nhiều ô) cao hơn 90vh, wrapper bên
+    // trong tự cuộn dọc (overflow-y-auto) thay vì bị cắt mất hoặc đẩy section phình ra.
+    <section className="relative flex h-[90vh] flex-col justify-center overflow-hidden bg-card py-10 text-center">
       {/* Nền ảnh full-bleed + overlay gradient trắng→trong suốt theo chiều dọc (top→bottom):
           đặc (from-card, ~100%) ở dải trần nhà sát navbar, hạ dần (via-card/60, dừng ở 58%
           chiều cao — kéo dài hơn bản gốc (45%) để hàng CTA không rơi đúng điểm ảnh bắt đầu lộ
@@ -259,7 +257,7 @@ export function Hero() {
         <div className="absolute inset-0 bg-gradient-to-b from-card from-0% via-card/60 via-58% to-transparent to-82%" />
       </div>
 
-      <div className="relative mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
+      <div className="relative mx-auto max-h-full w-full max-w-[var(--container-max)] overflow-y-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] md:px-8 lg:px-16 [&::-webkit-scrollbar]:hidden">
         <Reveal className="mx-auto max-w-3xl">
           {/* Cỡ chữ giảm 1 bậc so với bản cũ (4xl/5xl/6xl → 3xl/4xl/5xl) — headline giờ là
               phần xác nhận bối cảnh ("đúng trang mình cần"), không còn phải gánh vai trò nội

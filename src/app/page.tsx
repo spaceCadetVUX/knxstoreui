@@ -1,5 +1,4 @@
 import { BlogPosts } from "@/components/home/blog-posts";
-import { BrandMarquee } from "@/components/home/brand-marquee";
 import { Faq } from "@/components/home/faq";
 import { Hero } from "@/components/home/hero";
 import { ProductHighlights } from "@/components/home/product-highlights";
@@ -12,7 +11,6 @@ export default function Home() {
       <Hero />
       <ProtocolCategories />
       <ProductHighlights />
-      <BrandMarquee />
       <ValueProps />
       <Faq />
       <BlogPosts />

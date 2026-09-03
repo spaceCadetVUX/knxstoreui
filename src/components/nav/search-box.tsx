@@ -188,23 +188,24 @@ export function SearchBox({
                     onMouseEnter={() => setActiveIndex(idx)}
                     onMouseDown={(e) => e.preventDefault()} // giữ focus input, tránh blur đóng panel trước khi click ăn
                     onClick={() => setOpen(false)}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-colors ${
+                    className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
                       active ? "bg-muted" : "hover:bg-muted"
                     }`}
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-accent">
                       <CategoryIcon size={20} aria-hidden="true" />
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm text-foreground">
-                        {item.name}
-                      </span>
-                      <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <span>{item.brand}</span>
-                        <span aria-hidden="true">·</span>
-                        <span className="font-medium text-accent">
-                          {formatPriceVnd(item.price)}
+                    <span className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                      <span className="min-w-0 text-left">
+                        <span className="block truncate text-left text-sm text-foreground">
+                          {item.name}
                         </span>
+                        <span className="mt-0.5 block truncate text-left text-xs text-muted-foreground">
+                          {item.brand}
+                        </span>
+                      </span>
+                      <span className="shrink-0 whitespace-nowrap text-sm font-medium text-accent">
+                        {formatPriceVnd(item.price)}
                       </span>
                     </span>
                   </Link>
