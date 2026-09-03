@@ -62,8 +62,8 @@ function NavUnderline({ active }: { active: boolean }) {
   );
 }
 
-// Nút CTA duy nhất trong nav — solid fill navy trầm (--nav-cta, không phải --accent chuẩn
-// site — xem globals.css), hover đơn giản: lift nhẹ + sáng hơn, không pointer-tracking.
+// Nút CTA duy nhất trong nav — solid fill xanh #176fe3 (--nav-cta, không phải --accent
+// chuẩn site — xem globals.css), hover đơn giản: lift nhẹ + sáng hơn, không pointer-tracking.
 const ctaClass =
   "inline-flex items-center gap-2 rounded-full bg-nav-cta px-4 py-2 text-sm font-semibold text-on-nav-cta shadow-md transition-[filter,box-shadow,transform] duration-150 ease-out cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 

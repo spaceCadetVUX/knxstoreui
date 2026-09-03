@@ -46,12 +46,17 @@ export function BrandMarquee() {
           mask-image làm mờ dần 2 mép để logo không "cắt cụt" đột ngột. Logo giữ nguyên màu gốc
           (không grayscale) — đúng như bản gốc trên site. */}
       <div className="relative mt-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
-        <div className="flex w-max animate-[brand-marquee_55s_linear_infinite] items-center gap-12 hover:[animation-play-state:paused] motion-reduce:animate-none">
+        {/* Track KHÔNG gap ở đây — gap giữa 2 bản copy nằm trong chính mỗi bản (pr-12 bên dưới)
+            để 2 bản có bề rộng (nội dung + khoảng trống theo sau) bằng hệt nhau. Nếu gap nằm ở
+            đây (ngoài) thì tổng bề rộng = 2*C + 1*gap, và translateX(-50%) chỉ dịch đúng
+            C + gap/2 thay vì C + gap — lệch nửa khoảng gap mỗi vòng, gây giật nhẹ tại điểm nối
+            dù track có "nhân đôi + trượt 50%" đúng công thức. */}
+        <div className="flex w-max animate-[brand-marquee_55s_linear_infinite] items-center hover:[animation-play-state:paused] motion-reduce:animate-none">
           {[0, 1].map((copy) => (
             <div
               key={copy}
               aria-hidden={copy === 1 ? true : undefined}
-              className="flex shrink-0 items-center gap-12"
+              className="flex shrink-0 items-center gap-12 pr-12"
             >
               {brandLogos.map((brand) => (
                 <Image

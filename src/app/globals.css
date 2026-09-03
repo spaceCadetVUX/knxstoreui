@@ -70,10 +70,10 @@ html {
   /* CTA riêng cho section "Giải pháp theo giao thức" (trang chủ) — theo yêu cầu trực tiếp,
      khác --accent chuẩn của site nên tách token riêng thay vì override --accent toàn cục. */
   --category-cta: #1771e3;
-  /* Navy trầm riêng cho nút "Matter Smarthome" trên header (navbar.tsx ctaClass) — theo yêu
-     cầu "luxury minimal", tách khỏi --accent (Apple blue #0071e3) vì --accent còn dùng cho
+  /* Xanh riêng cho nút "Matter Smarthome" trên header (navbar.tsx ctaClass) — theo yêu cầu
+     trực tiếp #176fe3, tách khỏi --accent (Apple blue #0071e3) vì --accent còn dùng cho
      active nav-link/focus ring toàn site, đổi thẳng --accent sẽ ảnh hưởng ngoài phạm vi nút này. */
-  --nav-cta: #123a63;
+  --nav-cta: #176fe3;
   --on-nav-cta: #ffffff;
   --muted: #e8ecf1;
   --muted-foreground: #475569;
@@ -81,6 +81,14 @@ html {
   --destructive: #dc2626;
   --on-destructive: #ffffff;
   --ring: #0071e3;
+  /* Trạng thái tồn kho — product-highlights.tsx (trang chủ). Xanh lá nghiêng lạnh (không phải
+     xanh lá thuần) để không "đánh nhau" với --accent xanh dương của site; amber tách khỏi
+     --destructive (đỏ, dành riêng cho lỗi/hành động phá hủy) vì "đặt hàng trước" là thông tin
+     trung tính, không phải cảnh báo lỗi. */
+  --success: #1a8f5c;
+  --on-success: #ffffff;
+  --pending: #b45309;
+  --on-pending: #ffffff;
 
   /* Dark-section — dùng CHỌN LỌC (hero, trang Matter Smarthome), KHÔNG phải dark-mode toggle */
   --background-dark: #0f172a;
@@ -127,6 +135,10 @@ html {
   --color-destructive: var(--destructive);
   --color-on-destructive: var(--on-destructive);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-on-success: var(--on-success);
+  --color-pending: var(--pending);
+  --color-on-pending: var(--on-pending);
 
   --color-background-dark: var(--background-dark);
   --color-foreground-dark: var(--foreground-dark);

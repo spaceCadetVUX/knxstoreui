@@ -57,6 +57,18 @@ export const categoryIcon: Record<CategoryGroupKey, Icon> = {
   matter: WifiHigh,
 };
 
+// Nhãn NGẮN theo nhóm — khác `label` dài trong productCategories.items (vd: "Chiếu sáng
+// (DALI-2 / Casambi / DMX512)"), dùng cho chỗ cần gọn: badge/chip trên thẻ sản phẩm
+// (product-highlights.tsx). Dùng chung 1 nguồn thay vì mỗi nơi tự viết tắt riêng.
+export const categoryGroupShortLabel: Record<CategoryGroupKey, string> = {
+  "chieu-sang": "Chiếu sáng",
+  hvac: "HVAC",
+  "an-ninh": "An ninh",
+  knx: "KNX",
+  "cam-bien": "Cảm biến",
+  matter: "Matter",
+};
+
 // Thật — gom 79 category thô trong catalog thành 6 nhóm theo domain, khớp với
 // article_section thật của blog (Chiếu sáng 54 bài, HVAC 21 bài, An ninh 13 bài, KNX 9 bài...)
 export const productCategories: NavGroup = {

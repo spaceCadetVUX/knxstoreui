@@ -1,5 +1,6 @@
 import { BrandMarquee } from "@/components/home/brand-marquee";
 import { Hero } from "@/components/home/hero";
+import { ProductHighlights } from "@/components/home/product-highlights";
 import { ProtocolCategories } from "@/components/home/protocol-categories";
 import { ShopByCategory } from "@/components/home/shop-by-category";
 
@@ -9,6 +10,7 @@ export default function Home() {
       <Hero />
       <ProtocolCategories />
       <ShopByCategory />
+      <ProductHighlights />
       <BrandMarquee />
     </main>
   );
