@@ -23,6 +23,9 @@ html {
   --card-foreground: #1d1d1f;
   --accent: #0071e3; /* Xanh signature Apple (thay navy #0f467c cũ) */
   --on-accent: #ffffff;
+  /* CTA riêng cho section "Giải pháp theo giao thức" (trang chủ) — theo yêu cầu trực tiếp,
+     khác --accent chuẩn của site nên tách token riêng thay vì override --accent toàn cục. */
+  --category-cta: #1771e3;
   --muted: #e8ecf1;
   --muted-foreground: #475569;
   --border: #e2e8f0;
@@ -97,4 +100,16 @@ body {
     "Segoe UI",
     system-ui,
     sans-serif;
+}
+
+/* Marquee logo thương hiệu (brand-marquee.tsx) — dùng qua Tailwind arbitrary utility
+   animate-[brand-marquee_...] vì Tailwind không có keyframe marquee built-in. Track nhân đôi
+   danh sách rồi trượt đúng 50% bề rộng để nối liền vòng lặp không giật. */
+@keyframes brand-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }

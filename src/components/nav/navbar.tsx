@@ -70,13 +70,30 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
+  // Chỉ cắt overflow trong lúc row 2 đang animate co/giãn chiều cao (grid-rows trick cần vậy
+  // để clip mượt). Khi đã giãn hết và đứng yên thì chuyển overflow-visible, nếu không dropdown
+  // menu (position: absolute, cao hơn h-12 của row) sẽ bị div bọc này cắt mất — đây chính là
+  // bug "hover vào là mất dropdown".
+  const [rowOverflowHidden, setRowOverflowHidden] = useState(false);
   const lastScrollY = useRef(0);
   // Timestamp tới khi nào bỏ qua toggle do scroll gây ra. Ngay sau khi row 2 đổi trạng thái,
   // chiều cao header đổi làm nội dung dưới dịch chuyển — trình duyệt (scroll anchoring) có thể
   // tự bù trừ scrollY gần như ngay lập tức, và bù trừ đó lại bị đọc nhầm thành user scroll,
   // gây vòng lặp đóng/mở liên tục. Khoá lại trong đúng thời lượng transition (300ms) + buffer.
   const suppressUntil = useRef(0);
+  // Với prefers-reduced-motion, grid-template-rows đổi tức thời (transition-none) nên
+  // "transitionend" không bao giờ bắn — nếu vẫn bật overflow-hidden lúc collapse thì nó sẽ
+  // kẹt luôn ở true (không có sự kiện nào gỡ ra), làm dropdown vĩnh viễn mất sau lần scroll
+  // đầu tiên. Nhóm user này không cần overflow-hidden vì đổi trạng thái diễn ra trong 1 frame,
+  // không có gì để clip cả.
+  const reducedMotionRef = useRef(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    reducedMotionRef.current = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+  }, []);
 
   useEffect(() => {
     function onScroll() {
@@ -93,17 +110,26 @@ export function Navbar() {
       // khi scroll nhẹ (trackpad/momentum). Luôn expand khi ở sát top trang.
       if (y <= 8) {
         setNavCollapsed((prev) => {
-          if (prev) suppressUntil.current = now + 350;
+          if (prev) {
+            suppressUntil.current = now + 350;
+            if (!reducedMotionRef.current) setRowOverflowHidden(true);
+          }
           return false;
         });
       } else if (y > lastScrollY.current + 10) {
         setNavCollapsed((prev) => {
-          if (!prev) suppressUntil.current = now + 350;
+          if (!prev) {
+            suppressUntil.current = now + 350;
+            if (!reducedMotionRef.current) setRowOverflowHidden(true);
+          }
           return true;
         });
       } else if (y < lastScrollY.current - 10) {
         setNavCollapsed((prev) => {
-          if (prev) suppressUntil.current = now + 350;
+          if (prev) {
+            suppressUntil.current = now + 350;
+            if (!reducedMotionRef.current) setRowOverflowHidden(true);
+          }
           return false;
         });
       }
@@ -203,8 +229,13 @@ export function Navbar() {
         aria-hidden={navCollapsed}
         className="hidden grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none md:grid"
         style={{ gridTemplateRows: navCollapsed ? "0fr" : "1fr" }}
+        onTransitionEnd={(e) => {
+          if (e.propertyName === "grid-template-rows" && !navCollapsed) {
+            setRowOverflowHidden(false);
+          }
+        }}
       >
-        <div className="overflow-hidden">
+        <div className={rowOverflowHidden ? "overflow-hidden" : "overflow-visible"}>
           <div className="border-t border-border/70">
             <div className="mx-auto max-w-[var(--container-max)] px-4 md:px-8 lg:px-16">
               <div className="flex h-12 items-center justify-between">
