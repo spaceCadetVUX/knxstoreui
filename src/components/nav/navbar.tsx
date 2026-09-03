@@ -25,9 +25,8 @@ type NavItem =
   | { kind: "link"; label: string; href: string }
   | { kind: "dropdown"; group: NavGroup };
 
-// Thứ tự đúng theo mockup "Navbar 28": Trang chủ | Danh mục sản phẩm▾ | Giải pháp▾ | Thương hiệu▾ | Dự án | Blog
+// Thứ tự đúng theo mockup "Navbar 28": Danh mục sản phẩm▾ | Giải pháp▾ | Thương hiệu▾ | Dự án | Blog
 const navItems: NavItem[] = [
-  { kind: "link", label: "Trang chủ", href: "/" },
   { kind: "dropdown", group: productCategories },
   { kind: "dropdown", group: solutions },
   { kind: "dropdown", group: topBrands },
@@ -281,14 +280,6 @@ export function Navbar() {
             <SearchBox variant="mobile" className="mb-4" />
 
             <div className="flex flex-col divide-y divide-border">
-              <Link
-                href="/"
-                onClick={() => setMobileOpen(false)}
-                aria-current={isActiveHref(pathname, "/") ? "page" : undefined}
-                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/") ? "font-medium text-accent" : ""}`}
-              >
-                Trang chủ
-              </Link>
               <MobileGroup group={productCategories} onNavigate={() => setMobileOpen(false)} />
               <MobileGroup group={solutions} onNavigate={() => setMobileOpen(false)} />
               <MobileGroup group={topBrands} onNavigate={() => setMobileOpen(false)} />

@@ -5,10 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowUpRight,
-  Buildings,
-  Building,
-  Crane,
-  House,
+  CaretLeft,
+  CaretRight,
+  Lightbulb,
+  Snowflake,
+  Rows,
+  ShieldCheck,
   type Icon,
 } from "@phosphor-icons/react";
 import { Reveal } from "@/components/nav/reveal";
@@ -21,6 +23,7 @@ import {
   topBrands,
 } from "@/components/nav/nav-data";
 import { shopCategories } from "./shop-categories-data";
+import { brandLogos } from "./brand-logos-data";
 
 // Href/label giống hệt product-highlights.tsx (VIEW_ALL_HREF/VIEW_ALL_LABEL) — 1 nguồn chân lý
 // cho "trang tất cả sản phẩm", tránh 2 nơi lệch nhau nếu route đổi sau này.
@@ -32,23 +35,53 @@ const ALL_PRODUCTS_LABEL = "Xem tất cả sản phẩm";
 // riêng cho Hero để tránh 2 nguồn "danh mục hot" lệch nhau giữa Hero và ShopByCategory.
 const quickCategoryChips = shopCategories.slice(0, 6);
 
-// solutions (nav-data.ts) không có field icon riêng (dùng cho dropdown navbar, chỉ cần text) —
-// map cục bộ CHỈ trong hero.tsx theo href, không sửa nav-data.ts/kiểu NavGroupItem để tránh
-// đụng tới navbar.tsx (không cần icon) và giữ đúng ranh giới "chỉ đọc data từ nav/".
-const solutionIconByHref: Record<string, Icon> = {
-  "/giai-phap/nha-o": House,
-  "/giai-phap/khach-san": Buildings,
-  "/giai-phap/van-phong": Building,
-  "/giai-phap/du-an": Crane,
-};
-
 type TabTile = {
   key: string;
   label: string;
   href: string;
   meta?: string;
   icon?: Icon;
+  logo?: { src: string; width: number; height: number };
 };
+
+// Tab "Giải pháp" trong Hero: nội dung LOCAL, riêng với `solutions` (nav-data.ts, vẫn đang cấp
+// cho dropdown navbar/mobile menu) — theo yêu cầu 2026-09-03 chỉ đổi hiển thị trong Hero, không
+// đụng nav-data.ts. Href tạm trỏ "/" (chưa có trang danh mục "Rèm cửa tự động" trong catalog) —
+// cần mapping lại khi có route thật. Tile nhỏ + icon (không ảnh) theo yêu cầu 2026-09-03.
+const heroSolutionTiles: TabTile[] = [
+  { key: "chieu-sang", label: "Chiếu sáng", href: "/", icon: Lightbulb },
+  { key: "hvac", label: "HVAC", href: "/", icon: Snowflake },
+  { key: "rem-cua", label: "Rèm cửa tự động", href: "/", icon: Rows },
+  { key: "an-ninh", label: "An ninh", href: "/", icon: ShieldCheck },
+];
+
+// topBrands (nav-data.ts) không mang sẵn ảnh logo (chỉ label/href/meta, dùng cho dropdown
+// navbar text-only) — brandLogos (brand-logos-data.ts, đang cấp cho BrandMarquee) mới có
+// file logo thật. 2 nguồn dùng chung 1 quy ước href `/thuong-hieu/{slug}` (xem comment trong
+// brand-logos-data.ts) nên map thẳng qua href, không cần sửa nav-data.ts.
+const brandLogoByHref = new Map(brandLogos.map((brand) => [brand.href, brand]));
+
+// Danh sách đầy đủ cho tab "Thương hiệu" trong Hero: topBrands (8, sort theo SKU) trước, sau
+// đó nối thêm brand còn lại trong brandLogos (chưa trùng href với topBrands) — mục đích DUY
+// NHẤT là có đủ nội dung để nút next/prev (phân trang 8 tile/trang) có ý nghĩa, không phải để
+// thay thế bảng xếp hạng brand bán chạy của topBrands.
+const heroBrandTiles: TabTile[] = [
+  ...topBrands.items.map((item) => ({
+    key: item.href,
+    label: item.label,
+    href: item.href,
+    meta: item.meta,
+    logo: brandLogoByHref.get(item.href),
+  })),
+  ...brandLogos
+    .filter((brand) => !topBrands.items.some((item) => item.href === brand.href))
+    .map((brand) => ({
+      key: brand.href,
+      label: brand.label,
+      href: brand.href,
+      logo: brand,
+    })),
+];
 
 type HeroTab = {
   id: string;
@@ -65,6 +98,14 @@ type HeroTab = {
 // (6→2/3/6, 4→2/4, 8→2/4 đều chia hết) — cùng nguyên tắc đã áp dụng ở shop-by-category.tsx.
 const heroTabs: HeroTab[] = [
   {
+    id: "giai-phap",
+    label: solutions.label,
+    items: heroSolutionTiles,
+    gridColsClass: "grid-cols-2 sm:grid-cols-4",
+    viewAllHref: solutions.viewAllHref,
+    viewAllLabel: solutions.viewAllLabel,
+  },
+  {
     id: "danh-muc",
     label: productCategories.label,
     items: productCategories.items.map((item) => ({
@@ -79,29 +120,12 @@ const heroTabs: HeroTab[] = [
     viewAllLabel: productCategories.viewAllLabel,
   },
   {
-    id: "giai-phap",
-    label: solutions.label,
-    items: solutions.items.map((item) => ({
-      key: item.href,
-      label: item.label,
-      href: item.href,
-      icon: solutionIconByHref[item.href],
-    })),
-    gridColsClass: "grid-cols-2 lg:grid-cols-4",
-    viewAllHref: solutions.viewAllHref,
-    viewAllLabel: solutions.viewAllLabel,
-  },
-  {
     id: "thuong-hieu",
     label: topBrands.label,
-    // Brand không có icon ngữ nghĩa như danh mục/giải pháp — tile dùng chữ cái đầu (monogram,
-    // xem hàm initials() bên dưới) thay vì để trống, giữ đồng dạng "ô có ảnh nhỏ" với 2 tab kia.
-    items: topBrands.items.map((item) => ({
-      key: item.href,
-      label: item.label,
-      href: item.href,
-      meta: item.meta,
-    })),
+    // topBrands (8, sort theo SKU) trước, nối thêm các brand còn lại trong brandLogos (16, chưa
+    // trùng href) để có đủ nội dung cho nút next/prev — xem heroBrandTiles bên dưới. Brand nào
+    // chưa có file logo (vd "moorgen") rơi về chữ cái đầu (monogram, hàm initials() bên dưới).
+    items: heroBrandTiles,
     gridColsClass: "grid-cols-2 sm:grid-cols-4",
     viewAllHref: topBrands.viewAllHref,
     viewAllLabel: topBrands.viewAllLabel,
@@ -183,6 +207,12 @@ export function Hero() {
   const [activeTab, setActiveTab] = useState(0);
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const baseId = useId();
+
+  // Phân trang riêng cho tab "Thương hiệu" — heroBrandTiles có 24 brand (nhiều hơn 8 ô/trang
+  // của lưới sm:grid-cols-4), nút next/prev để xem hết thay vì cắt cụt còn 8 brand đầu.
+  const BRAND_PAGE_SIZE = 8;
+  const brandPageCount = Math.ceil(heroBrandTiles.length / BRAND_PAGE_SIZE);
+  const [brandPage, setBrandPage] = useState(0);
 
   function goToTab(idx: number, focusTab = false) {
     setActiveTab(idx);
@@ -352,34 +382,78 @@ export function Hero() {
                     hidden={!isActive}
                     className="mt-5"
                   >
+                    {tab.id === "thuong-hieu" && (
+                      <div className="mb-2.5 flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          aria-label="Xem thương hiệu trước"
+                          onClick={() => setBrandPage((p) => Math.max(0, p - 1))}
+                          disabled={brandPage === 0}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors duration-150 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:text-foreground"
+                        >
+                          <CaretLeft size={14} weight="bold" aria-hidden="true" />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Xem thêm thương hiệu"
+                          onClick={() =>
+                            setBrandPage((p) => Math.min(brandPageCount - 1, p + 1))
+                          }
+                          disabled={brandPage >= brandPageCount - 1}
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors duration-150 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:text-foreground"
+                        >
+                          <CaretRight size={14} weight="bold" aria-hidden="true" />
+                        </button>
+                      </div>
+                    )}
                     <ul className={`grid gap-2.5 ${tab.gridColsClass}`}>
-                      {tab.items.map((item) => (
-                        <li key={item.key}>
-                          <Link
-                            href={item.href}
-                            className="group flex h-full flex-col items-center gap-2 rounded-2xl border border-border bg-card px-2 py-4 text-center transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                          >
-                            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-accent">
-                              {item.icon ? (
-                                <item.icon size={20} aria-hidden="true" />
+                        {(tab.id === "thuong-hieu"
+                          ? heroBrandTiles.slice(
+                              brandPage * BRAND_PAGE_SIZE,
+                              brandPage * BRAND_PAGE_SIZE + BRAND_PAGE_SIZE,
+                            )
+                          : tab.items
+                        ).map((item) => (
+                          <li key={item.key}>
+                            <Link
+                              href={item.href}
+                              className="group flex h-full flex-col items-center gap-2 rounded-2xl border border-border bg-card px-2 py-4 text-center transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+                            >
+                              {item.logo ? (
+                                <span className="flex h-11 w-full shrink-0 items-center justify-center rounded-xl bg-white px-3">
+                                  <Image
+                                    src={item.logo.src}
+                                    alt={item.label}
+                                    width={item.logo.width}
+                                    height={item.logo.height}
+                                    className="h-7 w-auto object-contain sm:h-8"
+                                  />
+                                </span>
                               ) : (
-                                <span className="text-xs font-bold" aria-hidden="true">
-                                  {initials(item.label)}
+                                <>
+                                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-accent">
+                                    {item.icon ? (
+                                      <item.icon size={20} aria-hidden="true" />
+                                    ) : (
+                                      <span className="text-xs font-bold" aria-hidden="true">
+                                        {initials(item.label)}
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="line-clamp-2 text-xs font-semibold leading-snug text-foreground sm:text-[13px]">
+                                    {item.label}
+                                  </span>
+                                </>
+                              )}
+                              {item.meta && (
+                                <span className="text-[11px] text-muted-foreground">
+                                  {item.meta}
                                 </span>
                               )}
-                            </span>
-                            <span className="line-clamp-2 text-xs font-semibold leading-snug text-foreground sm:text-[13px]">
-                              {item.label}
-                            </span>
-                            {item.meta && (
-                              <span className="text-[11px] text-muted-foreground">
-                                {item.meta}
-                              </span>
-                            )}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
                     <div className="mt-4 text-center">
                       <Link
                         href={tab.viewAllHref}
