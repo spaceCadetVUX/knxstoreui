@@ -1,6 +1,6 @@
 import { searchProducts, type SearchProduct } from "@/components/nav/search-data";
 
-export type StockStatus = "in-stock" | "backorder";
+export type StockStatus = "in-stock" | "backorder" | "out-of-stock";
 
 export type HighlightProduct = SearchProduct & {
   /** null = giá liên hệ (price === 0) — chưa công bố tồn kho cho SKU dạng báo giá. */
@@ -13,15 +13,15 @@ export type HighlightProduct = SearchProduct & {
 const HIGHLIGHT_IDS = [6, 42, 472, 72, 40, 2, 117, 5];
 
 // TODO khi có nguồn tồn kho thật (Supabase lienminh-inventory?): thay STOCK_BY_ID bằng dữ liệu
-// tồn kho thật, có thể theo thời gian thực. Hiện tại là MOCK TĨNH — chỉ để demo 2 trạng thái UI
-// (còn hàng giao 24h / hàng đặt trước 5-7 ngày), không phải số liệu tồn kho thật của bất kỳ SKU
-// nào trong danh sách dưới đây.
+// tồn kho thật, có thể theo thời gian thực. Hiện tại là MOCK TĨNH — chỉ để demo 3 trạng thái UI
+// (còn hàng / đặt trước / hết hàng), không phải số liệu tồn kho thật của bất kỳ SKU nào trong
+// danh sách dưới đây. null = không hiện trạng thái tồn kho (dành cho SKU giá liên hệ báo giá).
 const STOCK_BY_ID: Record<number, StockStatus | null> = {
   6: "in-stock",
   42: "in-stock",
   472: "in-stock",
   72: "in-stock",
-  40: "in-stock",
+  40: "out-of-stock",
   2: "in-stock",
   117: "backorder",
   5: null,

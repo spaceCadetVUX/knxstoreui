@@ -2,12 +2,13 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, MagnifyingGlass } from "@phosphor-icons/react";
 import { Reveal } from "./reveal";
-import { categoryIcon } from "./nav-data";
-import { searchProducts, formatPriceVnd, normalizeSearchText } from "./search-data";
+import { recordSearchClick } from "./recent-searches";
+import { searchProducts, formatPriceVnd, normalizeSearchText, type SearchProduct } from "./search-data";
 
 const MAX_RESULTS = 5;
 
@@ -57,9 +58,10 @@ export function SearchBox({
 
   const showPanel = open && query.trim().length > 0;
 
-  function goToResult(url: string) {
+  function goToResult(item: SearchProduct) {
     setOpen(false);
-    router.push(url);
+    recordSearchClick(item.id);
+    router.push(item.url);
   }
 
   function goToSearch() {
@@ -86,7 +88,7 @@ export function SearchBox({
     } else if (e.key === "Enter") {
       if (activeIndex >= 0 && results[activeIndex]) {
         e.preventDefault();
-        goToResult(results[activeIndex].url);
+        goToResult(results[activeIndex]);
       } else if (variant === "hero") {
         // Chỉ nhánh hero: Enter mà chưa chọn gợi ý nào thì nhảy thẳng trang kết quả — nav
         // (desktop/mobile) giữ nguyên hành vi cũ (Enter không làm gì nếu chưa chọn gợi ý).
@@ -176,7 +178,6 @@ export function SearchBox({
           ) : (
             <>
               {results.map((item, idx) => {
-                const CategoryIcon = categoryIcon[item.categoryGroup];
                 const active = idx === activeIndex;
                 return (
                   <Link
@@ -187,13 +188,25 @@ export function SearchBox({
                     href={item.url}
                     onMouseEnter={() => setActiveIndex(idx)}
                     onMouseDown={(e) => e.preventDefault()} // giữ focus input, tránh blur đóng panel trước khi click ăn
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      setOpen(false);
+                      recordSearchClick(item.id);
+                    }}
                     className={`flex cursor-pointer items-start gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
                       active ? "bg-muted" : "hover:bg-muted"
                     }`}
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-accent">
-                      <CategoryIcon size={20} aria-hidden="true" />
+                    {/* Ảnh sản phẩm thật (search-data.ts, xem comment ở đó) thay cho icon nhóm
+                        danh mục trước đây — đúng ảnh từng SKU thay vì icon chung chung cho cả
+                        nhóm, giống pattern đã dùng ở "Sản phẩm bạn đã tìm" (hero.tsx). */}
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-muted">
+                      <Image
+                        src={item.image.src}
+                        alt={item.name}
+                        width={item.image.width}
+                        height={item.image.height}
+                        className="h-full w-full object-contain"
+                      />
                     </span>
                     <span className="flex min-w-0 flex-1 items-start justify-between gap-3">
                       <span className="min-w-0 text-left">

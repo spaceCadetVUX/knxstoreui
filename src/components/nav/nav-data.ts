@@ -134,17 +134,29 @@ export const topBrands: NavGroup = {
   ],
 };
 
-// ĐỀ XUẤT — chưa có dữ liệu CMS xác nhận, cần duyệt lại với sales/marketing
+// Thật — khớp đúng menu "Giải pháp" trên knxstore.vn (crawl 2026-09-04): danh sách PHẲNG 12
+// giao thức/loại giải pháp (KHÔNG phải phân theo loại công trình như bản đề xuất cũ đã bỏ).
+// Mỗi mục trỏ tới 1 trang nội dung SEO dài (không phải trang danh mục sản phẩm đơn giản) —
+// href gốc là /solution/{slug}, giữ nguyên "Mobus" (không phải lỗi gõ "Modbus" — đây là giao
+// thức RS-485 riêng của Moorgen, đã verify nội dung trang thật, khác Modbus công nghiệp mở).
 export const solutions: NavGroup = {
   label: "Giải pháp",
   href: "/giai-phap",
   viewAllHref: "/giai-phap",
   viewAllLabel: "Xem tất cả giải pháp",
   items: [
-    { label: "Nhà ở thông minh" , href: "/giai-phap/nha-o" },
-    { label: "Khách sạn / Resort", href: "/giai-phap/khach-san" },
-    { label: "Văn phòng / Toà nhà thương mại", href: "/giai-phap/van-phong" },
-    { label: "Công trình / Dự án lớn (System Integrator)", href: "/giai-phap/du-an" },
+    { label: "Casambi", href: "/solution/casambi" },
+    { label: "KNX", href: "/solution/knx" },
+    { label: "DALI", href: "/solution/dali" },
+    { label: "DMX", href: "/solution/dmx" },
+    { label: "Lutron", href: "/solution/lutron" },
+    { label: "HomeKit", href: "/solution/homekit" },
+    { label: "Zigbee", href: "/solution/zigbee" },
+    { label: "Mobus", href: "/solution/mobus" },
+    { label: "An ninh", href: "/solution/an-ninh" },
+    { label: "Giải pháp khác", href: "/solution/giai-phap-khac" },
+    { label: "Matter", href: "/solution/matter" },
+    { label: "HVAC", href: "/solution/hvac" },
   ],
 };
 

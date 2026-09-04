@@ -1,29 +1,19 @@
 "use client"; // Reveal dùng useEffect/useState (mount-flag animation)
 
-import { useId, useRef, useState } from "react";
+import { useSyncExternalStore } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  CaretLeft,
-  CaretRight,
-  Lightbulb,
-  Snowflake,
-  Rows,
-  ShieldCheck,
-  type Icon,
-} from "@phosphor-icons/react";
+import { ArrowUpRight } from "@phosphor-icons/react";
 import { Reveal } from "@/components/nav/reveal";
 import { SearchBox } from "@/components/nav/search-box";
 import {
-  categoryGroupShortLabel,
-  categoryIcon,
-  productCategories,
-  solutions,
-  topBrands,
-} from "@/components/nav/nav-data";
+  clearRecentSearches,
+  getRecentSearchIdsServerSnapshot,
+  getRecentSearchIdsSnapshot,
+  subscribeRecentSearches,
+} from "@/components/nav/recent-searches";
+import { formatPriceVnd, searchProducts, type SearchProduct } from "@/components/nav/search-data";
 import { shopCategories } from "./shop-categories-data";
-import { brandLogos } from "./brand-logos-data";
 
 // Href/label giống hệt product-highlights.tsx (VIEW_ALL_HREF/VIEW_ALL_LABEL) — 1 nguồn chân lý
 // cho "trang tất cả sản phẩm", tránh 2 nơi lệch nhau nếu route đổi sau này.
@@ -34,107 +24,6 @@ const ALL_PRODUCTS_LABEL = "Xem tất cả sản phẩm";
 // shopCategories (shop-categories-data.ts, dữ liệu thật từ catalog) — không tự bịa danh sách
 // riêng cho Hero để tránh 2 nguồn "danh mục hot" lệch nhau giữa Hero và ShopByCategory.
 const quickCategoryChips = shopCategories.slice(0, 6);
-
-type TabTile = {
-  key: string;
-  label: string;
-  href: string;
-  meta?: string;
-  icon?: Icon;
-  logo?: { src: string; width: number; height: number };
-};
-
-// Tab "Giải pháp" trong Hero: nội dung LOCAL, riêng với `solutions` (nav-data.ts, vẫn đang cấp
-// cho dropdown navbar/mobile menu) — theo yêu cầu 2026-09-03 chỉ đổi hiển thị trong Hero, không
-// đụng nav-data.ts. Href tạm trỏ "/" (chưa có trang danh mục "Rèm cửa tự động" trong catalog) —
-// cần mapping lại khi có route thật. Tile nhỏ + icon (không ảnh) theo yêu cầu 2026-09-03.
-const heroSolutionTiles: TabTile[] = [
-  { key: "chieu-sang", label: "Chiếu sáng", href: "/", icon: Lightbulb },
-  { key: "hvac", label: "HVAC", href: "/", icon: Snowflake },
-  { key: "rem-cua", label: "Rèm cửa tự động", href: "/", icon: Rows },
-  { key: "an-ninh", label: "An ninh", href: "/", icon: ShieldCheck },
-];
-
-// topBrands (nav-data.ts) không mang sẵn ảnh logo (chỉ label/href/meta, dùng cho dropdown
-// navbar text-only) — brandLogos (brand-logos-data.ts, đang cấp cho BrandMarquee) mới có
-// file logo thật. 2 nguồn dùng chung 1 quy ước href `/thuong-hieu/{slug}` (xem comment trong
-// brand-logos-data.ts) nên map thẳng qua href, không cần sửa nav-data.ts.
-const brandLogoByHref = new Map(brandLogos.map((brand) => [brand.href, brand]));
-
-// Danh sách đầy đủ cho tab "Thương hiệu" trong Hero: topBrands (8, sort theo SKU) trước, sau
-// đó nối thêm brand còn lại trong brandLogos (chưa trùng href với topBrands) — mục đích DUY
-// NHẤT là có đủ nội dung để nút next/prev (phân trang 8 tile/trang) có ý nghĩa, không phải để
-// thay thế bảng xếp hạng brand bán chạy của topBrands.
-const heroBrandTiles: TabTile[] = [
-  ...topBrands.items.map((item) => ({
-    key: item.href,
-    label: item.label,
-    href: item.href,
-    meta: item.meta,
-    logo: brandLogoByHref.get(item.href),
-  })),
-  ...brandLogos
-    .filter((brand) => !topBrands.items.some((item) => item.href === brand.href))
-    .map((brand) => ({
-      key: brand.href,
-      label: brand.label,
-      href: brand.href,
-      logo: brand,
-    })),
-];
-
-type HeroTab = {
-  id: string;
-  label: string;
-  items: TabTile[];
-  gridColsClass: string;
-  viewAllHref: string;
-  viewAllLabel: string;
-};
-
-// P2 — 3 tab "khám phá có cấu trúc", mỗi tab tái dùng ĐÚNG data đã có trong nav-data.ts (nguồn
-// đang cấp cho dropdown navbar) — không tạo danh sách song song, đổi 1 nơi là đồng bộ cả 2 chỗ.
-// Cột lưới (gridColsClass) chọn riêng theo SỐ Ô của từng tab để không có hàng cuối lẻ loi
-// (6→2/3/6, 4→2/4, 8→2/4 đều chia hết) — cùng nguyên tắc đã áp dụng ở shop-by-category.tsx.
-const heroTabs: HeroTab[] = [
-  {
-    id: "giai-phap",
-    label: solutions.label,
-    items: heroSolutionTiles,
-    gridColsClass: "grid-cols-2 sm:grid-cols-4",
-    viewAllHref: solutions.viewAllHref,
-    viewAllLabel: solutions.viewAllLabel,
-  },
-  {
-    id: "danh-muc",
-    label: productCategories.label,
-    items: productCategories.items.map((item) => ({
-      key: item.href,
-      label: item.key ? categoryGroupShortLabel[item.key] : item.label,
-      href: item.href,
-      meta: item.meta,
-      icon: item.key ? categoryIcon[item.key] : undefined,
-    })),
-    gridColsClass: "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6",
-    viewAllHref: productCategories.viewAllHref,
-    viewAllLabel: productCategories.viewAllLabel,
-  },
-  {
-    id: "thuong-hieu",
-    label: topBrands.label,
-    // topBrands (8, sort theo SKU) trước, nối thêm các brand còn lại trong brandLogos (16, chưa
-    // trùng href) để có đủ nội dung cho nút next/prev — xem heroBrandTiles bên dưới. Brand nào
-    // chưa có file logo (vd "moorgen") rơi về chữ cái đầu (monogram, hàm initials() bên dưới).
-    items: heroBrandTiles,
-    gridColsClass: "grid-cols-2 sm:grid-cols-4",
-    viewAllHref: topBrands.viewAllHref,
-    viewAllLabel: topBrands.viewAllLabel,
-  },
-];
-
-function initials(label: string): string {
-  return label.slice(0, 2).toUpperCase();
-}
 
 /**
  * Logo giao thức/chuẩn thật — tải từ nguồn chính chủ (KNXStore là đối tác/nhà phân phối
@@ -196,46 +85,37 @@ const protocolLogos = [
 ];
 
 export function Hero() {
-  // P2 — state tab viết RIÊNG trong hero.tsx (không import chéo protocol-categories.tsx) để 2
-  // hệ tab độc lập hoàn toàn — đổi 1 bên không rủi ro ảnh hưởng bên kia. Cơ chế tablist/phím
-  // trái-phải giống protocol-categories.tsx, NHƯNG bỏ animation trượt translateX của file đó:
-  // translateX cần 1 "stage" cao cố định chứa cả 3 panel chồng lên nhau, mà 3 tab ở đây số ô
-  // rất khác nhau (6/4/8 ô, layout cột khác nhau) nên "stage" cố định sẽ để dư khoảng trắng
-  // rất lớn ở 2 tab ít ô hơn. Dùng `hidden` (ẩn/hiện trực tiếp, không giữ layout) để mỗi tab
-  // tự co theo đúng số ô của nó — bản thân <section> Hero vẫn có chiều cao cố định 90vh (xem
-  // comment ở <section> bên dưới), phần cuộn nếu tràn là ở wrapper nội dung, không phải ở đây.
-  const [activeTab, setActiveTab] = useState(0);
-  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
-  const baseId = useId();
-
-  // Phân trang riêng cho tab "Thương hiệu" — heroBrandTiles có 24 brand (nhiều hơn 8 ô/trang
-  // của lưới sm:grid-cols-4), nút next/prev để xem hết thay vì cắt cụt còn 8 brand đầu.
-  const BRAND_PAGE_SIZE = 8;
-  const brandPageCount = Math.ceil(heroBrandTiles.length / BRAND_PAGE_SIZE);
-  const [brandPage, setBrandPage] = useState(0);
-
-  function goToTab(idx: number, focusTab = false) {
-    setActiveTab(idx);
-    if (focusTab) tabRefs.current[idx]?.focus();
-  }
-
-  function onTabKeyDown(e: React.KeyboardEvent<HTMLButtonElement>, idx: number) {
-    if (e.key === "ArrowRight") {
-      e.preventDefault();
-      goToTab((idx + 1) % heroTabs.length, true);
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      goToTab((idx - 1 + heroTabs.length) % heroTabs.length, true);
-    }
-  }
+  // P2 — thay hệ tab "Giải pháp/Danh mục sản phẩm/Thương hiệu" cũ bằng "Sản phẩm bạn đã tìm"
+  // (lịch sử search, theo yêu cầu trực tiếp 2026-09-04). Site chưa có tài khoản/backend nên
+  // lịch sử lưu localStorage theo trình duyệt (recent-searches.ts, ghi từ search-box.tsx đúng
+  // lúc khách bấm 1 kết quả gợi ý cụ thể) — chỉ lưu id, tự tra lại record mới nhất (tên/giá/
+  // ảnh) từ `searchProducts` (search-data.ts) ở đây.
+  //
+  // `useSyncExternalStore` (không phải useEffect+setState) — localStorage không tồn tại lúc
+  // SSR nên cần tách snapshot server (rỗng, getRecentSearchIdsServerSnapshot) / client (đọc
+  // thật, getRecentSearchIdsSnapshot); đây là cách React xử lý đúng bài toán "đọc từ external
+  // store" mà không cần setState đồng bộ trong effect (tránh lint react-hooks/set-state-in-
+  // effect, cùng tinh thần "tính trong lúc render" mà reveal.tsx/mega-menu.tsx đã dùng).
+  //
+  // KHÔNG có fallback "sản phẩm gợi ý" khi rỗng (theo yêu cầu trực tiếp) — chưa từng search
+  // thì ẩn hẳn khối này, panel Hero ngắn lại, chỉ hiện sau khi khách đã bấm ít nhất 1 kết quả.
+  const recentIds = useSyncExternalStore(
+    subscribeRecentSearches,
+    getRecentSearchIdsSnapshot,
+    getRecentSearchIdsServerSnapshot,
+  );
+  const recentProducts = recentIds
+    .map((id) => searchProducts.find((product) => product.id === id))
+    .filter((product): product is SearchProduct => product !== undefined);
 
   return (
     // relative + overflow-hidden để làm nền cho ảnh absolute bên dưới. bg-card vẫn giữ làm màu
-    // nền dự phòng (trước khi ảnh load xong). Chiều cao CỐ ĐỊNH 90vh theo yêu cầu 2026-09-03
-    // (không grow theo nội dung nữa) — nội dung được căn giữa theo chiều dọc (flex justify-center)
-    // trong khung 90vh đó; nếu nội dung (vd tab "Thương hiệu" nhiều ô) cao hơn 90vh, wrapper bên
-    // trong tự cuộn dọc (overflow-y-auto) thay vì bị cắt mất hoặc đẩy section phình ra.
-    <section className="relative flex h-[90vh] flex-col justify-center overflow-hidden bg-card py-10 text-center">
+    // nền dự phòng (trước khi ảnh load xong). Chiều cao TỐI THIỂU 95vh theo yêu cầu 2026-09-04
+    // (đổi từ h-[90vh] cố định trước đó) — nội dung căn giữa theo chiều dọc (flex justify-center)
+    // trong khung tối thiểu 95vh đó; nếu nội dung (vd tab "Thương hiệu" nhiều ô) cao hơn 95vh,
+    // section tự nới rộng theo nội dung thay vì cắt — wrapper bên trong vẫn giữ overflow-y-auto
+    // làm lưới an toàn cho trường hợp viewport quá thấp (vd landscape mobile).
+    <section className="relative flex min-h-[95vh] flex-col justify-center overflow-hidden bg-card py-10 text-center">
       {/* Nền ảnh full-bleed + overlay gradient trắng→trong suốt theo chiều dọc (top→bottom):
           đặc (from-card, ~100%) ở dải trần nhà sát navbar, hạ dần (via-card/60, dừng ở 58%
           chiều cao — kéo dài hơn bản gốc (45%) để hàng CTA không rơi đúng điểm ảnh bắt đầu lộ
@@ -269,7 +149,7 @@ export function Hero() {
               lặp lại khắp panel (nút search, tab đang chọn, link "Xem tất cả"), đồng thời đúng
               từ khoá giá trị cốt lõi nhất trong câu. whitespace-nowrap trên span này để cụm từ
               không bị ngắt dòng giữa chừng (vd "tự động" 1 dòng, "hoá" rớt xuống dòng sau). */}
-          <h1 className="text-balance font-onest text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+          <h1 className="text-balance text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Nền tảng phân phối thiết bị{" "}
             <span className="whitespace-nowrap text-accent">tự động hóa</span> tòa nhà
           </h1>
@@ -329,147 +209,57 @@ export function Hero() {
               </div>
             </div>
 
-            {/* P2 — tab "khám phá có cấu trúc": khoảng cách xuống đây (mt-8/mt-10) lớn hơn hẳn
-                khoảng P0→P1 (mt-4) — báo hiệu đây là 1 cụm chức năng khác (Gestalt proximity),
-                nhưng CHƯA phải mức ngắt lớn nhất (đó là trước dải logo P3, xem border-t bên
-                dưới). role=tablist/tab/tabpanel + phím trái-phải đầy đủ, tất cả panel LUÔN có
-                trong DOM (chỉ ẩn bằng `hidden`, không unmount) — cùng lý do SEO đã ghi ở
-                protocol-categories.tsx: nội dung tab vẫn được tính trọng số như nội dung thường. */}
-            <div className="mt-8 sm:mt-10">
-              <div
-                role="tablist"
-                aria-label="Khám phá theo"
-                className="flex flex-wrap justify-center gap-2"
-              >
-                {heroTabs.map((tab, idx) => {
-                  const isActive = idx === activeTab;
-                  return (
-                    <button
-                      key={tab.id}
-                      ref={(el) => {
-                        tabRefs.current[idx] = el;
-                      }}
-                      type="button"
-                      role="tab"
-                      id={`${baseId}-tab-${tab.id}`}
-                      aria-selected={isActive}
-                      aria-controls={`${baseId}-panel-${tab.id}`}
-                      tabIndex={isActive ? 0 : -1}
-                      onClick={() => goToTab(idx)}
-                      onKeyDown={(e) => onTabKeyDown(e, idx)}
-                      className={`inline-flex cursor-pointer items-center rounded-full border px-4 py-2 text-xs font-semibold transition-colors duration-150 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:text-[13px] ${
-                        isActive
-                          ? "border-accent bg-accent text-on-accent"
-                          : "border-border bg-card text-foreground hover:border-accent hover:text-accent"
-                      }`}
-                    >
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {heroTabs.map((tab, idx) => {
-                const isActive = idx === activeTab;
-                return (
-                  <div
-                    key={tab.id}
-                    id={`${baseId}-panel-${tab.id}`}
-                    role="tabpanel"
-                    aria-labelledby={`${baseId}-tab-${tab.id}`}
-                    hidden={!isActive}
-                    className="mt-5"
+            {/* P2 — "Sản phẩm bạn đã tìm": thay hệ tab Giải pháp/Danh mục sản phẩm/Thương hiệu
+                cũ (theo yêu cầu trực tiếp 2026-09-04, xem comment ở đầu component). Lịch sử
+                search THẬT (localStorage, recent-searches.ts) — không có fallback "gợi ý" khi
+                rỗng (theo yêu cầu trực tiếp), nên ẩn hẳn cả khối kể cả heading khi chưa có lịch
+                sử, thay vì chừa 1 khoảng trống/tiêu đề cụt. Card tái dùng đúng ngôn ngữ hình ảnh
+                P1 (rounded-2xl, border-border, hover nâng nhẹ) để đồng bộ style trong panel. */}
+            {recentProducts.length > 0 && (
+              <div className="mt-8 sm:mt-10">
+                <div className="flex items-center justify-center gap-3">
+                  <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Sản phẩm bạn đã tìm
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={clearRecentSearches}
+                    className="text-xs font-medium text-muted-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
-                    {tab.id === "thuong-hieu" && (
-                      <div className="mb-2.5 flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          aria-label="Xem thương hiệu trước"
-                          onClick={() => setBrandPage((p) => Math.max(0, p - 1))}
-                          disabled={brandPage === 0}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors duration-150 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:text-foreground"
-                        >
-                          <CaretLeft size={14} weight="bold" aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Xem thêm thương hiệu"
-                          onClick={() =>
-                            setBrandPage((p) => Math.min(brandPageCount - 1, p + 1))
-                          }
-                          disabled={brandPage >= brandPageCount - 1}
-                          className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors duration-150 hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-border disabled:hover:text-foreground"
-                        >
-                          <CaretRight size={14} weight="bold" aria-hidden="true" />
-                        </button>
-                      </div>
-                    )}
-                    <ul className={`grid gap-2.5 ${tab.gridColsClass}`}>
-                        {(tab.id === "thuong-hieu"
-                          ? heroBrandTiles.slice(
-                              brandPage * BRAND_PAGE_SIZE,
-                              brandPage * BRAND_PAGE_SIZE + BRAND_PAGE_SIZE,
-                            )
-                          : tab.items
-                        ).map((item) => (
-                          <li key={item.key}>
-                            <Link
-                              href={item.href}
-                              className="group flex h-full flex-col items-center gap-2 rounded-2xl border border-border bg-card px-2 py-4 text-center transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-                            >
-                              {item.logo ? (
-                                <span className="flex h-11 w-full shrink-0 items-center justify-center rounded-xl bg-white px-3">
-                                  <Image
-                                    src={item.logo.src}
-                                    alt={item.label}
-                                    width={item.logo.width}
-                                    height={item.logo.height}
-                                    className="h-7 w-auto object-contain sm:h-8"
-                                  />
-                                </span>
-                              ) : (
-                                <>
-                                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted text-accent">
-                                    {item.icon ? (
-                                      <item.icon size={20} aria-hidden="true" />
-                                    ) : (
-                                      <span className="text-xs font-bold" aria-hidden="true">
-                                        {initials(item.label)}
-                                      </span>
-                                    )}
-                                  </span>
-                                  <span className="line-clamp-2 text-xs font-semibold leading-snug text-foreground sm:text-[13px]">
-                                    {item.label}
-                                  </span>
-                                </>
-                              )}
-                              {item.meta && (
-                                <span className="text-[11px] text-muted-foreground">
-                                  {item.meta}
-                                </span>
-                              )}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    <div className="mt-4 text-center">
+                    Xoá lịch sử
+                  </button>
+                </div>
+                {/* Thẻ nhỏ hơn ~30% bản đầu (theo yêu cầu trực tiếp) — lưới dày hơn (3/6 cột thay
+                    2/4) để mỗi ô hẹp lại đúng tỉ lệ đó (ảnh vuông ăn theo bề rộng ô), kèm giảm
+                    padding/bo góc/cỡ chữ tương ứng cho cân đối với ô nhỏ hơn. */}
+                <ul className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-6">
+                  {recentProducts.map((product) => (
+                    <li key={product.id}>
                       <Link
-                        href={tab.viewAllHref}
-                        className="group inline-flex items-center gap-1 rounded-sm text-xs font-semibold text-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:text-sm"
+                        href={product.url}
+                        className="group flex h-full flex-col gap-1.5 rounded-xl border border-border bg-card p-2 text-left transition-[transform,box-shadow,border-color] duration-150 ease-out hover:-translate-y-0.5 hover:border-accent hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent motion-reduce:transition-none motion-reduce:hover:translate-y-0"
                       >
-                        {tab.viewAllLabel}
-                        <ArrowUpRight
-                          size={13}
-                          weight="bold"
-                          aria-hidden="true"
-                          className="transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                        />
+                        <span className="flex aspect-square items-center justify-center overflow-hidden rounded-lg">
+                          <Image
+                            src={product.image.src}
+                            alt={product.name}
+                            width={product.image.width}
+                            height={product.image.height}
+                            className="h-full w-full object-contain"
+                          />
+                        </span>
+                        <span className="line-clamp-2 text-[10px] font-semibold leading-snug text-foreground sm:text-[11px]">
+                          {product.name}
+                        </span>
+                        <span className="mt-auto text-[10px] font-semibold text-accent sm:text-[11px]">
+                          {formatPriceVnd(product.price)}
+                        </span>
                       </Link>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* border-t tách "vùng khám phá" (search + chip + tab) khỏi "vùng tín hiệu uy tín"
                 (dải logo) — khoảng cách LỚN NHẤT trong toàn panel, đúng nguyên tắc proximity

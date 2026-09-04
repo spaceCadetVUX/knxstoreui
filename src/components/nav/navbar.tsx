@@ -12,24 +12,21 @@ import {
   List,
   X,
 } from "@phosphor-icons/react";
-import {
-  productCategories,
-  solutions,
-  topBrands,
-  type NavGroup,
-} from "./nav-data";
-import { Reveal, useDelayedUnmount } from "./reveal";
+import { productCategories, solutions, topBrands, type NavGroup } from "./nav-data";
+import { MegaMenu, type MegaMenuTabKey } from "./mega-menu";
 import { SearchBox } from "./search-box";
 
 type NavItem =
   | { kind: "link"; label: string; href: string }
-  | { kind: "dropdown"; group: NavGroup };
+  | { kind: "dropdown"; group: NavGroup; tabKey: MegaMenuTabKey };
 
 // Thứ tự đúng theo mockup "Navbar 28": Danh mục sản phẩm▾ | Giải pháp▾ | Thương hiệu▾ | Dự án | Blog
+// 3 mục "dropdown" giờ đều mở CHUNG 1 mega menu full-screen (mega-menu.tsx) ở đúng tab tương
+// ứng — xem mega-menu-plan.md. Không còn hover-intent riêng cho từng cái (NavDropdown cũ).
 const navItems: NavItem[] = [
-  { kind: "dropdown", group: productCategories },
-  { kind: "dropdown", group: solutions },
-  { kind: "dropdown", group: topBrands },
+  { kind: "dropdown", group: productCategories, tabKey: "danh-muc" },
+  { kind: "dropdown", group: solutions, tabKey: "giai-phap" },
+  { kind: "dropdown", group: topBrands, tabKey: "thuong-hieu" },
   { kind: "link", label: "Dự án", href: "/du-an" },
   { kind: "link", label: "Blog", href: "/blog" },
 ];
@@ -67,8 +64,11 @@ const ctaClass =
   "inline-flex items-center gap-2 rounded-full bg-nav-cta px-4 py-2 text-sm font-semibold text-on-nav-cta shadow-md transition-[filter,box-shadow,transform] duration-150 ease-out cursor-pointer hover:-translate-y-0.5 hover:shadow-lg hover:brightness-110 active:translate-y-0 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background motion-reduce:transition-none motion-reduce:hover:translate-y-0";
 
 export function Navbar() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const mobilePanelMounted = useDelayedUnmount(mobileOpen);
+  // Mega menu full-screen DÙNG CHUNG cho cả 3 dropdown desktop lẫn hamburger mobile — 1 state
+  // duy nhất (open + tab đang chọn) thay vì mobileOpen/NavDropdown riêng từng cái trước đây.
+  // Xem mega-menu-plan.md mục 3 (lý do gộp mobile vào chung 1 component).
+  const [megaOpen, setMegaOpen] = useState(false);
+  const [megaTab, setMegaTab] = useState<MegaMenuTabKey>("danh-muc");
   const [scrolled, setScrolled] = useState(false);
   const [navCollapsed, setNavCollapsed] = useState(false);
   // Chỉ cắt overflow trong lúc row 2 đang animate co/giãn chiều cao (grid-rows trick cần vậy
@@ -142,13 +142,21 @@ export function Navbar() {
   }, []);
 
   return (
-    <header
-      className={`sticky top-0 z-50 border-b border-border/70 backdrop-saturate-150 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
-        scrolled
-          ? "bg-card/90 shadow-sm backdrop-blur-xl"
-          : "bg-card/75 backdrop-blur-lg"
-      }`}
-    >
+    // Fragment ở ngoài — MegaMenu (position:fixed) PHẢI là sibling của <header>, không phải con
+    // của nó: header có backdrop-filter (backdrop-blur-*/backdrop-saturate-150) nên tự trở
+    // thành containing block cho mọi phần tử fixed bên trong nó (đúng theo spec — backdrop-
+    // filter/filter/transform/perspective/will-change trên tổ tiên đều làm vậy), khiến
+    // `top-16 bottom-0` của MegaMenu bị tính theo mép DƯỚI CỦA HEADER (~114px) thay vì đáy
+    // viewport thật — overlay chỉ cao ~50px thay vì phủ hết màn hình. Đặt MegaMenu ra ngoài
+    // header để containing block quay lại đúng viewport.
+    <>
+      <header
+        className={`sticky top-0 z-50 border-b border-border/70 backdrop-saturate-150 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${
+          scrolled
+            ? "bg-card/90 shadow-sm backdrop-blur-xl"
+            : "bg-card/75 backdrop-blur-lg"
+        }`}
+      >
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-2 focus:z-[60] focus:rounded-lg focus:bg-accent focus:px-4 focus:py-2 focus:text-on-accent"
@@ -200,23 +208,26 @@ export function Navbar() {
             </button>
             <button
               type="button"
-              aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
-              aria-expanded={mobileOpen}
-              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={megaOpen ? "Đóng menu" : "Mở menu"}
+              aria-expanded={megaOpen}
+              onClick={() => {
+                setMegaTab("danh-muc");
+                setMegaOpen((v) => !v);
+              }}
               className="relative ml-1 flex h-11 w-11 items-center justify-center rounded-full text-foreground transition-colors cursor-pointer hover:bg-muted md:hidden"
             >
               <List
                 size={22}
                 aria-hidden="true"
                 className={`absolute transition-all duration-200 ease-out ${
-                  mobileOpen ? "rotate-45 opacity-0" : "rotate-0 opacity-100"
+                  megaOpen ? "rotate-45 opacity-0" : "rotate-0 opacity-100"
                 }`}
               />
               <X
                 size={22}
                 aria-hidden="true"
                 className={`absolute transition-all duration-200 ease-out ${
-                  mobileOpen ? "rotate-0 opacity-100" : "-rotate-45 opacity-0"
+                  megaOpen ? "rotate-0 opacity-100" : "-rotate-45 opacity-0"
                 }`}
               />
             </button>
@@ -253,11 +264,36 @@ export function Navbar() {
                         <NavUnderline active={isActiveHref(pathname, item.href)} />
                       </Link>
                     ) : (
-                      <NavDropdown
+                      <button
                         key={item.group.label}
-                        group={item.group}
-                        active={isActiveHref(pathname, item.group.href)}
-                      />
+                        type="button"
+                        aria-haspopup="true"
+                        aria-expanded={megaOpen && megaTab === item.tabKey}
+                        onClick={() => {
+                          if (megaOpen && megaTab === item.tabKey) {
+                            setMegaOpen(false);
+                          } else {
+                            setMegaTab(item.tabKey);
+                            setMegaOpen(true);
+                          }
+                        }}
+                        className={navLinkClass(
+                          isActiveHref(pathname, item.group.href) || (megaOpen && megaTab === item.tabKey),
+                        )}
+                      >
+                        {item.group.label}
+                        <CaretDown
+                          size={14}
+                          weight="bold"
+                          aria-hidden="true"
+                          className={`transition-transform duration-200 ${
+                            megaOpen && megaTab === item.tabKey ? "rotate-180" : ""
+                          }`}
+                        />
+                        <NavUnderline
+                          active={isActiveHref(pathname, item.group.href) || (megaOpen && megaTab === item.tabKey)}
+                        />
+                      </button>
                     ),
                   )}
                 </nav>
@@ -271,48 +307,19 @@ export function Navbar() {
           </div>
         </div>
       </div>
+      </header>
 
-      {/* Mobile panel — giữ mounted thêm 200ms lúc đóng (useDelayedUnmount) để Reveal chạy hết
-          hiệu ứng fade-out, thay vì biến mất tức thì như trước. */}
-      {mobilePanelMounted && (
-        <Reveal show={mobileOpen} className="border-t border-border/70 bg-card md:hidden">
-          <div className="mx-auto max-w-[var(--container-max)] px-4 py-4">
-            <SearchBox variant="mobile" className="mb-4" />
-
-            <div className="flex flex-col divide-y divide-border">
-              <MobileGroup group={productCategories} onNavigate={() => setMobileOpen(false)} />
-              <MobileGroup group={solutions} onNavigate={() => setMobileOpen(false)} />
-              <MobileGroup group={topBrands} onNavigate={() => setMobileOpen(false)} />
-              <Link
-                href="/du-an"
-                onClick={() => setMobileOpen(false)}
-                aria-current={isActiveHref(pathname, "/du-an") ? "page" : undefined}
-                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/du-an") ? "font-medium text-accent" : ""}`}
-              >
-                Dự án
-              </Link>
-              <Link
-                href="/blog"
-                onClick={() => setMobileOpen(false)}
-                aria-current={isActiveHref(pathname, "/blog") ? "page" : undefined}
-                className={`py-3 text-base cursor-pointer ${isActiveHref(pathname, "/blog") ? "font-medium text-accent" : ""}`}
-              >
-                Blog
-              </Link>
-            </div>
-
-            <Link
-              href="/giai-phap/matter-smarthome"
-              onClick={() => setMobileOpen(false)}
-              className={`${ctaClass} mt-4 w-full justify-center`}
-            >
-              Matter Smarthome
-              <ArrowUpRight size={16} weight="bold" aria-hidden="true" />
-            </Link>
-          </div>
-        </Reveal>
-      )}
-    </header>
+      {/* Mega menu full-screen — dùng chung cho cả 3 dropdown desktop lẫn hamburger mobile,
+          thay hẳn NavDropdown + mobile panel accordion riêng trước đây. Xem mega-menu.tsx.
+          Đặt NGOÀI </header> — xem comment ở đầu return() (backdrop-filter trên header phá
+          containing block của phần tử fixed nếu đặt bên trong). */}
+      <MegaMenu
+        open={megaOpen}
+        activeTab={megaTab}
+        onClose={() => setMegaOpen(false)}
+        onTabChange={setMegaTab}
+      />
+    </>
   );
 }
 
@@ -334,177 +341,3 @@ function CartBadge() {
   );
 }
 
-function NavDropdown({ group, active }: { group: NavGroup; active: boolean }) {
-  const [open, setOpen] = useState(false);
-  // Giữ panel mounted thêm 200ms lúc đóng để Reveal chạy hết hiệu ứng fade-out thay vì bị gỡ
-  // khỏi DOM ngay — đây là phần khiến mega menu trước đây "biến mất" thay vì mượt.
-  const menuMounted = useDelayedUnmount(open);
-  const rootRef = useRef<HTMLDivElement>(null);
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  function clearCloseTimer() {
-    if (closeTimer.current) {
-      clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-    }
-  }
-
-  // Hover-intent: mở ngay khi hover, đóng trễ 150ms khi rời chuột — đủ thời gian
-  // băng qua khoảng cách (mt-2) giữa nút và panel mà không bị đóng hụt.
-  function handleMouseEnter() {
-    clearCloseTimer();
-    setOpen(true);
-  }
-  function handleMouseLeave() {
-    clearCloseTimer();
-    closeTimer.current = setTimeout(() => setOpen(false), 150);
-  }
-
-  useEffect(() => clearCloseTimer, []);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function onPointerDown(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
-
-  return (
-    <div
-      className="relative"
-      ref={rootRef}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-    >
-      <button
-        type="button"
-        aria-haspopup="true"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className={navLinkClass(active)}
-      >
-        {group.label}
-        <CaretDown
-          size={14}
-          weight="bold"
-          aria-hidden="true"
-          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-        <NavUnderline active={active || open} />
-      </button>
-
-      {menuMounted && (
-        <Reveal
-          show={open}
-          role="menu"
-          className="absolute left-0 top-full z-50 mt-2 w-72 rounded-[var(--card-radius)] border border-border bg-card p-2 shadow-lg"
-        >
-          {/* Mỗi item cascade cách nhau 30ms — "Stagger List" tier, không dùng quá 8 item/nhóm */}
-          {group.items.map((item, idx) => (
-            <Reveal key={item.href} delayMs={idx * 30}>
-              <Link
-                href={item.href}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
-              >
-                <span>{item.label}</span>
-                {item.meta && (
-                  <span className="text-xs text-muted-foreground">{item.meta}</span>
-                )}
-              </Link>
-            </Reveal>
-          ))}
-          <Reveal delayMs={group.items.length * 30} className="mt-1 border-t border-border pt-1">
-            <Link
-              href={group.viewAllHref}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="block cursor-pointer rounded-lg px-3 py-2 text-sm font-medium text-accent transition-colors hover:bg-muted"
-            >
-              {group.viewAllLabel} →
-            </Link>
-          </Reveal>
-        </Reveal>
-      )}
-    </div>
-  );
-}
-
-function MobileGroup({
-  group,
-  onNavigate,
-}: {
-  group: NavGroup;
-  onNavigate: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [openHeight, setOpenHeight] = useState(0);
-
-  // Animate max-height (px đo thật qua scrollHeight) thay vì grid-template-rows 0fr/1fr.
-  // Lý do đổi: grid-rows đo bằng đơn vị fr chỉ mới được các engine hiện đại hỗ trợ interpolate
-  // mượt — trên WebView cũ/hạn chế (Zalo in-app browser, Android WebView đời thấp, phổ biến ở
-  // tệp khách B2C của KNXStore) nó có thể fallback về nhảy tức thì thay vì animate, đúng kiểu
-  // "giật/tệ" khi test trên mobile thật dù desktop dev vẫn mượt bình thường. max-height/px là
-  // thuộc tính transition cơ bản nhất, được hỗ trợ ổn định ở mọi engine.
-  useEffect(() => {
-    if (open && contentRef.current) setOpenHeight(contentRef.current.scrollHeight);
-  }, [open, group.items.length]);
-
-  return (
-    <div className="py-1">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full cursor-pointer items-center justify-between py-3 text-base"
-      >
-        {group.label}
-        <CaretDown
-          size={16}
-          aria-hidden="true"
-          className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      <div
-        className="overflow-hidden transition-[max-height] duration-300 ease-out motion-reduce:transition-none"
-        style={{ maxHeight: open ? openHeight : 0 }}
-      >
-        <div ref={contentRef} className="flex flex-col gap-1 pb-2 pl-3">
-          {group.items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onNavigate}
-              className="py-2 text-sm text-muted-foreground cursor-pointer hover:text-accent"
-            >
-              {item.label}
-            </Link>
-          ))}
-          <Link
-            href={group.viewAllHref}
-            onClick={onNavigate}
-            className="py-2 text-sm font-medium text-accent cursor-pointer"
-          >
-            {group.viewAllLabel} →
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}

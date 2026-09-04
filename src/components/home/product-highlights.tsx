@@ -165,7 +165,7 @@ function ProductHighlightCard({ product }: { product: HighlightProduct }) {
         </p>
         {/* "SP-xxxxxx" suy từ id (search-data.ts), KHÔNG phải mã SKU thật trong ERP — xem
             product-highlights-data.ts. */}
-        <div className="-mt-1 text-xs tabular-nums text-muted-foreground">Mã: {skuOf(product.id)}</div>
+        <div className="-mt-1 text-xs tabular-nums text-muted-foreground">SKU: {skuOf(product.id)}</div>
 
         <div className="mt-auto pt-0.5">
           {hasPrice ? (
@@ -184,55 +184,68 @@ function ProductHighlightCard({ product }: { product: HighlightProduct }) {
         </div>
 
         {hasPrice ? (
-          <div className="flex items-center gap-2">
-            <div
-              role="group"
-              aria-label={`Số lượng ${product.name}`}
-              className="flex h-10 flex-1 items-center overflow-hidden rounded-[10px] border border-border"
-            >
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                aria-label="Giảm số lượng"
-                className="flex h-full w-8 items-center justify-center text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
-              >
-                <Minus size={14} weight="bold" aria-hidden="true" />
-              </button>
-              <output className="flex-1 text-center text-sm font-semibold tabular-nums">
-                {quantity}
-              </output>
-              <button
-                type="button"
-                onClick={() => setQuantity((q) => Math.min(99, q + 1))}
-                aria-label="Tăng số lượng"
-                className="flex h-full w-8 items-center justify-center text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
-              >
-                <Plus size={14} weight="bold" aria-hidden="true" />
-              </button>
-            </div>
-
+          product.stock === "out-of-stock" ? (
+            // Hết hàng: khóa hẳn thao tác mua thay vì để stepper/nút giỏ hàng hoạt động —
+            // tránh khách đặt được SKU không có sẵn.
             <button
               type="button"
-              onClick={handleAddToCart}
-              aria-label={`Thêm ${product.name} vào giỏ`}
-              className={`relative flex h-10 w-11 shrink-0 items-center justify-center rounded-[10px] text-on-accent transition-[filter,background-color] duration-150 ease-out hover:brightness-110 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
-                added ? "bg-success" : "bg-accent"
-              }`}
+              disabled
+              aria-label={`${product.name} tạm hết hàng`}
+              className="flex h-10 cursor-not-allowed items-center justify-center rounded-[10px] border border-border bg-muted text-[13.5px] font-semibold text-muted-foreground"
             >
-              <span
-                className={`pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-[11px] font-medium text-card transition-opacity duration-150 ${
-                  added ? "opacity-100" : "opacity-0"
+              Hết hàng
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div
+                role="group"
+                aria-label={`Số lượng ${product.name}`}
+                className="flex h-10 flex-1 items-center overflow-hidden rounded-[10px] border border-border"
+              >
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  aria-label="Giảm số lượng"
+                  className="flex h-full w-8 items-center justify-center text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+                >
+                  <Minus size={14} weight="bold" aria-hidden="true" />
+                </button>
+                <output className="flex-1 text-center text-sm font-semibold tabular-nums">
+                  {quantity}
+                </output>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.min(99, q + 1))}
+                  aria-label="Tăng số lượng"
+                  className="flex h-full w-8 items-center justify-center text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+                >
+                  <Plus size={14} weight="bold" aria-hidden="true" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                aria-label={`Thêm ${product.name} vào giỏ`}
+                className={`relative flex h-10 w-11 shrink-0 items-center justify-center rounded-[10px] text-on-accent transition-[filter,background-color] duration-150 ease-out hover:brightness-110 active:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
+                  added ? "bg-success" : "bg-accent"
                 }`}
               >
-                Đã thêm ✓
-              </span>
-              {added ? (
-                <Check size={18} weight="bold" aria-hidden="true" />
-              ) : (
-                <ShoppingCart size={18} weight="bold" aria-hidden="true" />
-              )}
-            </button>
-          </div>
+                <span
+                  className={`pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-[11px] font-medium text-card transition-opacity duration-150 ${
+                    added ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  Đã thêm ✓
+                </span>
+                {added ? (
+                  <Check size={18} weight="bold" aria-hidden="true" />
+                ) : (
+                  <ShoppingCart size={18} weight="bold" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          )
         ) : (
           <Link
             href={product.url}
@@ -243,20 +256,25 @@ function ProductHighlightCard({ product }: { product: HighlightProduct }) {
           </Link>
         )}
 
+        {/* Chỉ 3 trạng thái tồn kho hiển thị trên thẻ — không kèm chú thích thời gian giao, và
+            không hiện gì khi stock === null (SKU giá liên hệ báo giá, chưa công bố tồn kho). */}
         {product.stock === "in-stock" && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
-            Còn hàng · Giao trong 24h
+            Còn hàng
           </div>
         )}
         {product.stock === "backorder" && (
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-pending" aria-hidden="true" />
-            Hàng đặt trước · Giao 5–7 ngày
+            Đặt trước
           </div>
         )}
-        {product.stock === null && !hasPrice && (
-          <div className="text-xs text-muted-foreground">Kiểm tra tồn kho khi liên hệ</div>
+        {product.stock === "out-of-stock" && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" aria-hidden="true" />
+            Hết hàng
+          </div>
         )}
       </div>
     </li>
