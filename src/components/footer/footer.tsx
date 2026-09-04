@@ -80,10 +80,63 @@ export function Footer() {
                   className="h-6 w-auto"
                 />
               </Link>
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              {/* font-medium + text-foreground (thay mặc định + text-muted-foreground cũ) —
+                  theo yêu cầu trực tiếp "làm đậm hơn". */}
+              <p className="mt-4 text-sm font-medium leading-relaxed text-foreground">
                 Phân phối và tư vấn giải pháp tự động hóa tòa nhà — KNX, DALI-2, DMX512,
                 Casambi, BACnet, Modbus và Matter Smarthome.
               </p>
+
+              {/* 2 badge uy tín — theo yêu cầu trực tiếp 2026-09-04. CẢ HAI đều CHƯA gắn link
+                  xác thực thật (KNXStore chưa có tài khoản DMCA.com / chưa thông báo thật với
+                  Bộ Công Thương ở online.gov.vn tại thời điểm thêm badge này) — href tạm trỏ về
+                  trang chủ của từng bên (KHÔNG bịa link Status.aspx?ID=.../WebDetails/... giả).
+                  TODO khi đăng ký xong:
+                  - DMCA: đổi href sang đúng link "Protection Status" (dmca.com/Protection/
+                    Status.aspx?ID=...) họ cấp sau khi tạo tài khoản.
+                  - Bộ Công Thương: ảnh badge (logoSaleNoti.png) là ảnh DÙNG CHUNG cho mọi site đã
+                    đăng ký (không riêng theo tài khoản) — nhưng LINK thì có, chỉ được cấp
+                    (online.gov.vn/Home/WebDetails/<id-riêng>) sau khi hồ sơ được duyệt. Gắn ảnh
+                    mà không link về đúng hồ sơ verify được nhiều nguồn hướng dẫn coi là dấu hiệu
+                    vi phạm quy định thông báo website TMĐT — cần đăng ký thật rồi thay href.
+
+                  Ảnh gốc bo-cong-thuong.png là canvas vuông 625×625 nhưng logo thật chỉ nằm
+                  giữa (~599×197, phần còn lại trong suốt) — cùng chiều cao class (h-14 cũ) nên
+                  logo hiện ra NHỎ HƠN hẳn DMCA (theo yêu cầu trực tiếp, đã đo bbox thật bằng
+                  Pillow). Dùng bo-cong-thuong-cropped.png (đã cắt sát viền, chừa 10px đệm) +
+                  cùng class h-9 với DMCA để 2 badge cao bằng nhau thật sự, không chỉ bằng nhau
+                  trên khai báo. Giữ nguyên bo-cong-thuong.png gốc (không xoá) để có bản chưa
+                  cắt nếu cần đối chiếu sau này. */}
+              <div className="mt-4 flex flex-wrap items-center gap-4">
+                <a
+                  href="https://www.dmca.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="DMCA.com"
+                >
+                  <Image
+                    src="/badges/dmca-protected.png"
+                    alt="DMCA.com"
+                    width={601}
+                    height={189}
+                    className="h-9 w-auto"
+                  />
+                </a>
+                <a
+                  href="https://online.gov.vn/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Đã thông báo Bộ Công Thương"
+                >
+                  <Image
+                    src="/badges/bo-cong-thuong-cropped.png"
+                    alt="Đã thông báo Bộ Công Thương"
+                    width={599}
+                    height={197}
+                    className="h-9 w-auto"
+                  />
+                </a>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 sm:gap-12">

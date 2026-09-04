@@ -459,7 +459,11 @@ function SolutionPanel({ query, onNavigate }: { query: string; onNavigate: () =>
               onClick={onNavigate}
               className="flex flex-col items-center gap-2.5 rounded-2xl border border-border p-4 text-center transition-[border-color,transform,box-shadow] duration-150 hover:-translate-y-0.5 hover:border-accent hover:shadow-md"
             >
-              <span className="flex h-11 w-full flex-none items-center justify-center rounded-xl bg-muted px-2">
+              {/* Bỏ nền xám (bg-muted) sau logo/icon theo yêu cầu trực tiếp — riêng logo thật
+                  (Casambi/KNX/DALI/Matter) đã có nền/màu sắc riêng, đặt trên nền xám nhìn thừa
+                  viền; icon Phosphor trung tính (DMX/Lutron/HomeKit...) vẫn đủ tương phản trên
+                  nền card trắng vì đã tô accent. */}
+              <span className="flex h-11 w-full flex-none items-center justify-center rounded-xl px-2">
                 {visual?.kind === "logo" ? (
                   <Image
                     src={visual.src}

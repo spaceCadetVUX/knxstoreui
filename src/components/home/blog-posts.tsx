@@ -73,7 +73,10 @@ export function BlogPosts() {
                 onClick={() => setPage(n)}
                 aria-current={n === page ? "page" : undefined}
                 className={`flex h-9 w-9 items-center justify-center rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-                  n === page ? "bg-foreground text-card" : "border border-border text-foreground hover:bg-muted"
+                  // bg-accent/text-on-accent (xanh signature site) thay bg-foreground/text-card
+                  // (đen) cũ — theo yêu cầu trực tiếp, đồng bộ màu trang đang chọn với hệ accent
+                  // toàn site (nút search, tab active, link...).
+                  n === page ? "bg-accent text-on-accent" : "border border-border text-foreground hover:bg-muted"
                 }`}
               >
                 {n}

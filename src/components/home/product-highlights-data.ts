@@ -1,11 +1,5 @@
 import { searchProducts, type SearchProduct } from "@/components/nav/search-data";
-
-export type StockStatus = "in-stock" | "backorder" | "out-of-stock";
-
-export type HighlightProduct = SearchProduct & {
-  /** null = giá liên hệ (price === 0) — chưa công bố tồn kho cho SKU dạng báo giá. */
-  stock: StockStatus | null;
-};
+import type { HighlightProduct, StockStatus } from "@/components/product/product-card";
 
 // Chọn 8 SKU thật trong searchProducts (KHÔNG chép lại tên/giá/brand — lấy nguyên object gốc)
 // để dàn trải đủ giao thức (Casambi/HVAC/An ninh/KNX/Matter/Cảm biến) và cả 2 trạng thái giá
@@ -39,9 +33,3 @@ export const highlightProducts: HighlightProduct[] = HIGHLIGHT_IDS.map((id) => (
   ...getSearchProduct(id),
   stock: STOCK_BY_ID[id] ?? null,
 }));
-
-/** "SP-000006" — suy từ id, KHÔNG phải mã SKU thật trong ERP/hệ thống kho (chưa có trường này
- * trong catalog). Thay bằng mã thật khi có nguồn dữ liệu tương ứng. */
-export function skuOf(id: number): string {
-  return `SP-${String(id).padStart(6, "0")}`;
-}
