@@ -26,9 +26,12 @@ export function RelatedProducts({
   categoryShortLabel: string;
   categoryHref: string;
 }) {
+  // Tối đa 4 thẻ — tránh lưới quá dài trên trang chi tiết sản phẩm (khác trang chủ/danh mục,
+  // nơi hiển thị hết cả danh sách).
   const related: HighlightProduct[] = searchProducts
     .filter((p) => p.categoryGroup === categoryGroup)
-    .map((p) => ({ ...p, stock: KNOWN_STOCK[p.id] ?? null }));
+    .map((p) => ({ ...p, stock: KNOWN_STOCK[p.id] ?? null }))
+    .slice(0, 4);
 
   if (related.length === 0) return null;
 
@@ -46,7 +49,7 @@ export function RelatedProducts({
           <ArrowUpRight size={13} weight="bold" aria-hidden="true" />
         </Link>
       </div>
-      <ul className="grid grid-cols-1 list-none gap-5 p-0 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-2 list-none gap-3.5 p-0 sm:gap-5 lg:grid-cols-4">
         {related.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}

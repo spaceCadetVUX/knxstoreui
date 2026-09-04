@@ -177,26 +177,30 @@ export function ProductCard({
           </Link>
         )}
 
-        {/* Chỉ 3 trạng thái tồn kho hiển thị trên thẻ — không kèm chú thích thời gian giao, và
-            không hiện gì khi stock === null (SKU giá liên hệ báo giá, chưa công bố tồn kho). */}
-        {product.stock === "in-stock" && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
-            Còn hàng
-          </div>
-        )}
-        {product.stock === "backorder" && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-pending" aria-hidden="true" />
-            Đặt trước
-          </div>
-        )}
-        {product.stock === "out-of-stock" && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" aria-hidden="true" />
-            Hết hàng
-          </div>
-        )}
+        {/* Luôn render 1 hàng cố định chiều cao (min-h) — kể cả khi stock === null (SKU giá liên
+            hệ báo giá, chưa công bố tồn kho) — để card không lùn hơn card có dòng tồn kho, tránh
+            lệch hàng stepper/nút giỏ giữa các thẻ cạnh nhau trong cùng 1 grid row. Chỉ 3 trạng
+            thái hiển thị chữ, không kèm chú thích thời gian giao. */}
+        <div className="flex min-h-[17px] items-center gap-1.5 text-xs text-muted-foreground">
+          {product.stock === "in-stock" && (
+            <>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
+              Còn hàng
+            </>
+          )}
+          {product.stock === "backorder" && (
+            <>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-pending" aria-hidden="true" />
+              Đặt trước
+            </>
+          )}
+          {product.stock === "out-of-stock" && (
+            <>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" aria-hidden="true" />
+              Hết hàng
+            </>
+          )}
+        </div>
       </div>
     </li>
   );

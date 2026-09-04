@@ -13,14 +13,31 @@ import { useId } from "react";
  */
 
 export function DeviceFrontView({ panelColor, inkColor }: { panelColor: string; inkColor: string }) {
+  const shadowId = useId();
+  const sheenId = useId();
   return (
     <svg
       viewBox="0 0 240 240"
       className="h-full w-full"
       role="img"
-      aria-label="Mặt trước thiết bị: 4 đèn LED trạng thái, bàn phím số 1 đến 9, nút 0, nút chức năng và phím xác nhận, cảm biến NFC phía dưới"
+      aria-label="Mặt trước thiết bị: 4 đèn LED trạng thái, bàn phím số 1 đến 9, nút chuông, nút 0, phím xác nhận, cảm biến NFC phía dưới"
     >
-      <rect x="20" y="20" width="200" height="200" rx="20" fill={panelColor} />
+      <defs>
+        <filter id={shadowId} x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="6" />
+        </filter>
+        {/* Sheen kính nhẹ trên nửa trên panel — gợi chiều sâu mặt kính thật, KHÔNG cố giả render
+            3D ảnh chụp (xem ghi chú đầu file: không dựng ảnh "giống thật" cho sản phẩm hãng khác). */}
+        <linearGradient id={sheenId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity={0.14} />
+          <stop offset="40%" stopColor="#ffffff" stopOpacity={0} />
+        </linearGradient>
+      </defs>
+
+      <ellipse cx="120" cy="222" rx="82" ry="7" fill="#000000" opacity={0.16} filter={`url(#${shadowId})`} />
+      <rect x="20" y="20" width="200" height="200" rx="26" fill={panelColor} />
+      <rect x="20" y="20" width="200" height="200" rx="26" fill={`url(#${sheenId})`} />
+
       <g style={{ color: inkColor }}>
         <circle cx="99" cy="46" r="3" fill="currentColor" opacity={0.9} />
         <circle cx="113" cy="46" r="3" fill="currentColor" opacity={0.9} />
@@ -38,7 +55,13 @@ export function DeviceFrontView({ panelColor, inkColor }: { panelColor: string; 
           <text x="139" y="169">9</text>
           <text x="177" y="135">0</text>
         </g>
-        <circle cx="177" cy="96" r="9" fill="none" stroke="currentColor" strokeWidth={1.6} />
+        {/* Nút chuông (universal button) — datasheet gọi "Universal button", ảnh thật cho thấy
+            đây là icon chuông, không phải vòng tròn trơn như bản trước. */}
+        <g transform="translate(177,96)" fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinejoin="round">
+          <path d="M-7,4.5 C-7,-4 -4,-8.5 0,-8.5 C4,-8.5 7,-4 7,4.5 L9,7.5 L-9,7.5 Z" />
+          <line x1="-2.2" y1="-9" x2="2.2" y2="-9" strokeLinecap="round" />
+          <circle cx="0" cy="10" r="1.3" fill="currentColor" stroke="none" />
+        </g>
         <polyline
           points="171,164 176,169 184,159"
           fill="none"
@@ -47,11 +70,10 @@ export function DeviceFrontView({ panelColor, inkColor }: { panelColor: string; 
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <g fill="none" stroke="currentColor" strokeWidth={1.6}>
-          <path d="M112,196 a12,12 0 0 1 16,0" />
-          <path d="M116,200 a7,7 0 0 1 8,0" />
-        </g>
-        <circle cx="120" cy="203" r="1.6" fill="currentColor" />
+        {/* Cảm biến NFC — vòng tròn + chấm giữa (đúng ảnh thật), bản trước vẽ nhầm thành vệt
+            sóng kiểu icon wifi. */}
+        <circle cx="120" cy="199" r="7" fill="none" stroke="currentColor" strokeWidth={1.6} />
+        <circle cx="120" cy="199" r="2.2" fill="currentColor" />
         <text
           x="120"
           y="216"

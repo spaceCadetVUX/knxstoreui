@@ -3,9 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductBySlug, productDetails } from "@/components/product/product-data";
 import { ProductHero } from "@/components/product/product-hero";
-import { ProductFeatures } from "@/components/product/product-features";
+import { ProductBoughtTogether } from "@/components/product/product-bought-together";
 import { ProductTabs } from "@/components/product/product-tabs";
-import { ProductAccessories } from "@/components/product/product-accessories";
 import { RelatedProducts } from "@/components/product/related-products";
 
 // Toàn bộ data hiện là local TS (chưa có backend — xem product-detail-page-plan.md Phase B),
@@ -32,10 +31,12 @@ export default async function ProductDetailPage({ params }: PageProps<"/san-pham
   if (!product) notFound();
 
   return (
-    <>
+    // Ghi đè nền xám --background của body bằng nền trắng (--card) — riêng cho trang chi tiết
+    // sản phẩm theo yêu cầu, không đổi token --background toàn site (ảnh hưởng các trang khác).
+    <div className="bg-card">
       <nav
         aria-label="Breadcrumb"
-        className="mx-auto flex max-w-[var(--container-max)] flex-wrap items-center gap-2 px-4 pb-2 pt-[18px] text-[13px] text-muted-foreground md:px-8 lg:px-16"
+        className="mx-auto flex w-full max-w-[var(--container-max)] flex-wrap items-center gap-2 px-4 pb-2 pt-[18px] text-[13px] text-muted-foreground md:px-8 lg:px-16"
       >
         <Link href="/" className="hover:text-accent">
           Trang chủ
@@ -51,14 +52,13 @@ export default async function ProductDetailPage({ params }: PageProps<"/san-pham
       </nav>
 
       <ProductHero product={product} />
-      <ProductFeatures features={product.features} />
+      <ProductBoughtTogether product={product} />
       <ProductTabs product={product} />
-      <ProductAccessories accessories={product.accessories} />
       <RelatedProducts
         categoryGroup={product.categoryGroup}
         categoryShortLabel={product.categoryShortLabel}
         categoryHref={product.categoryHref}
       />
-    </>
+    </div>
   );
 }

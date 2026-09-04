@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useLayoutEffect, useRef, useState } from "react";
 import { Check } from "@phosphor-icons/react";
 import type { ProductDetail } from "@/components/product/product-data";
 import { DeviceWiring } from "./product-illustrations";
@@ -22,27 +22,64 @@ export function ProductTabs({ product }: { product: ProductDetail }) {
   const [activeTab, setActiveTab] = useState<TabKey>("desc");
   const idBase = useId();
 
+  // Highlight active tab bằng 1 span trượt (đo offsetLeft/offsetWidth của nút đang chọn) thay vì
+  // đổi bg/border ngay trên từng nút — mượt hơn hẳn vì có transition left/width thật sự, không
+  // phải "nhảy" tức thì giữa 2 nút. useLayoutEffect để đo NGAY sau khi DOM cập nhật, tránh
+  // nhấp nháy vị trí cũ trước khi paint.
+  const tabRefs = useRef<Partial<Record<TabKey, HTMLButtonElement | null>>>({});
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const el = tabRefs.current[activeTab];
+      if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth });
+    };
+    measure();
+    // Đổi breakpoint (sm:flex/overflow-x-auto) hay resize cửa sổ đều có thể đổi vị trí nút.
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [activeTab]);
+
   return (
     <section className="mx-auto max-w-[var(--container-max)] px-4 pb-14 md:px-8 lg:px-16">
-      <div className="flex gap-1 overflow-x-auto border-b border-border" role="tablist">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            role="tab"
-            id={`${idBase}-tab-${tab.key}`}
-            aria-selected={activeTab === tab.key}
-            aria-controls={`${idBase}-panel-${tab.key}`}
-            onClick={() => setActiveTab(tab.key)}
-            className={`whitespace-nowrap border-b-2 px-[18px] py-3 text-[14.5px] font-semibold transition-colors ${
-              activeTab === tab.key
-                ? "border-accent text-accent"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      {/* Segmented control — bớt bo tròn (rounded-xl/lg thay vì rounded-full kiểu viên thuốc) +
+          tăng độ tương phản highlight cho tab active (border + shadow rõ hơn, không chỉ shadow-sm
+          mờ nhạt). Highlight giờ là 1 span trượt mượt giữa các nút (xem indicator/useLayoutEffect
+          phía trên) thay vì đổi màu nền tức thì. Căn giữa cụm (mx-auto, có tác dụng khi container
+          co theo nội dung ở sm:w-fit) + kẻ ngang bên dưới hết chiều rộng section để phân tách với
+          nội dung tab. */}
+      <div className="mb-7 border-b border-border pb-5">
+        <div
+          className="relative mx-auto inline-flex w-full max-w-full gap-1 overflow-x-auto rounded-xl bg-muted p-1 sm:flex sm:w-fit"
+          role="tablist"
+        >
+          {indicator && (
+            <span
+              aria-hidden="true"
+              className="absolute inset-y-1 rounded-lg border border-border bg-card shadow-md transition-[left,width] duration-300 ease-out motion-reduce:transition-none"
+              style={{ left: indicator.left, width: indicator.width }}
+            />
+          )}
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              ref={(el) => {
+                tabRefs.current[tab.key] = el;
+              }}
+              type="button"
+              role="tab"
+              id={`${idBase}-tab-${tab.key}`}
+              aria-selected={activeTab === tab.key}
+              aria-controls={`${idBase}-panel-${tab.key}`}
+              onClick={() => setActiveTab(tab.key)}
+              className={`relative z-10 whitespace-nowrap rounded-lg px-[18px] py-2.5 text-[14.5px] font-semibold transition-colors ${
+                activeTab === tab.key ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div
@@ -50,7 +87,7 @@ export function ProductTabs({ product }: { product: ProductDetail }) {
         id={`${idBase}-panel-desc`}
         aria-labelledby={`${idBase}-tab-desc`}
         hidden={activeTab !== "desc"}
-        className="flex max-w-[75ch] flex-col gap-3.5 pt-7 text-[15px]"
+        className="flex max-w-[75ch] flex-col gap-3.5 text-[15px] animate-[tab-fade-in_250ms_ease-out] motion-reduce:animate-none"
       >
         {product.description.map((paragraph, i) => (
           <p key={i} className="text-foreground">
@@ -73,7 +110,7 @@ export function ProductTabs({ product }: { product: ProductDetail }) {
         id={`${idBase}-panel-specs`}
         aria-labelledby={`${idBase}-tab-specs`}
         hidden={activeTab !== "specs"}
-        className="pt-7"
+        className="animate-[tab-fade-in_250ms_ease-out] motion-reduce:animate-none"
       >
         <div className="flex flex-col gap-7">
           {product.specGroups.map((group) => (
@@ -111,7 +148,7 @@ export function ProductTabs({ product }: { product: ProductDetail }) {
         id={`${idBase}-panel-install`}
         aria-labelledby={`${idBase}-tab-install`}
         hidden={activeTab !== "install"}
-        className="pt-7"
+        className="animate-[tab-fade-in_250ms_ease-out] motion-reduce:animate-none"
       >
         <div className="grid grid-cols-1 gap-7 md:grid-cols-[42%_1fr]">
           <div className="rounded-2xl border border-border bg-card p-5">
